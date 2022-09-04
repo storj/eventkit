@@ -10,7 +10,7 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"olio.lol/eventkit/pb"
+	"github.com/jtolio/eventkit/pb"
 )
 
 const (

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"olio.lol/eventkit"
+	"github.com/jtolio/eventkit"
 )
 
 var pkg = eventkit.Package()

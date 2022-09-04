@@ -1,4 +1,4 @@
-module olio.lol/eventkit
+module github.com/jtolio/eventkit
 
 go 1.18
 

@@ -14,7 +14,8 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/proto"
 
-	"olio.lol/eventkit/pb"
+	"github.com/jtolio/eventkit"
+	"github.com/jtolio/eventkit/pb"
 )
 
 var (
@@ -22,9 +23,54 @@ var (
 	flagWorkers = flag.Int("workers", runtime.NumCPU(), "number of workers")
 )
 
+func eventToEventMap(event *pb.Event, instance string, source netip.AddrPort, received time.Time) eventkit.EventMap {
+	em := make(eventkit.EventMap, len(event.Tags)+3)
+	for _, tag := range event.Tags {
+		if len(tag.Key) == 0 {
+			continue
+		}
+		switch v := tag.GetValue().(type) {
+		case *pb.Tag_String_:
+			em[tag.Key] = v.String_
+		case *pb.Tag_Int64:
+			em[tag.Key] = v.Int64
+		case *pb.Tag_Double:
+			em[tag.Key] = v.Double
+		case *pb.Tag_Bytes:
+			em[tag.Key] = v.Bytes
+		case *pb.Tag_Bool:
+			em[tag.Key] = v.Bool
+		case *pb.Tag_Duration:
+			em[tag.Key] = v.Duration.AsDuration()
+		case *pb.Tag_TimestampOffset:
+			em[tag.Key] = received.Add(v.TimestampOffset.AsDuration())
+		default:
+			continue
+		}
+	}
+	name := event.Name
+	if name == "" {
+		name = em["name"]
+	}
+	delete(em, "name")
+	scope := event.Scope
+	if event.Scope == nil {
+		scope = em["scope"]
+	}
+	delete(em, "scope")
+	if event.TimestampOffset != nil {
+		em["timestamp"] = received.Add(event.TimestampOffset.AsDuration())
+	}
+	em["instance"] = instance
+	em["packet_source"] =
+	return em,
+}
+
 func handleParsedPacket(packet *pb.Packet, source netip.AddrPort, received time.Time) error {
-	_, err := fmt.Println(packet, source, received)
-	return err
+	for _, event := range packet.Events {
+		fmt.Println(eventToEventMap(event, received))
+	}
+	return nil
 }
 
 func handlePacket(packet UDPPacket) error {
