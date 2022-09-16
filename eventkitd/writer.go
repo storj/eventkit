@@ -22,7 +22,7 @@ func NewWriter() *Writer {
 	}
 }
 
-func (w *Writer) CloseAll() {
+func (w *Writer) DropAll() {
 	w.mtx.Lock()
 	defer w.mtx.Unlock()
 
@@ -32,6 +32,10 @@ func (w *Writer) CloseAll() {
 		handle.fh.Close()
 		handle.mtx.Unlock()
 	}
+}
+
+func (w *Writer) Close() {
+	w.DropAll()
 }
 
 func (w *Writer) Append(path string, data []byte) error {
@@ -60,3 +64,4 @@ func (w *Writer) Append(path string, data []byte) error {
 	h.mtx.Unlock()
 	return err
 }
+

@@ -2,7 +2,6 @@ package main
 
 import (
 	"net"
-	"net/netip"
 	"sync"
 	"time"
 )
@@ -10,7 +9,7 @@ import (
 type UDPPacket struct {
 	buf    []byte
 	n      int
-	source netip.AddrPort
+	source *net.UDPAddr
 	ts     time.Time
 	pool   *sync.Pool
 }
@@ -41,7 +40,7 @@ func ListenUDP(addr string) (*UDPSource, error) {
 	return &UDPSource{
 		addr: addr,
 		pool: sync.Pool{
-			New: func() any {
+			New: func() interface{} {
 				return make([]byte, 10*1024)
 			},
 		},
@@ -51,7 +50,7 @@ func ListenUDP(addr string) (*UDPSource, error) {
 
 func (u *UDPSource) Next() (res UDPPacket, err error) {
 	buf := u.pool.Get().([]byte)
-	n, source, err := u.conn.ReadFromUDPAddrPort(buf)
+	n, source, err := u.conn.ReadFromUDP(buf)
 	return UDPPacket{
 		buf:    buf,
 		n:      n,
@@ -60,3 +59,4 @@ func (u *UDPSource) Next() (res UDPPacket, err error) {
 		pool:   &u.pool,
 	}, err
 }
+

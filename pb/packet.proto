@@ -33,3 +33,9 @@ message Packet {
     google.protobuf.Duration send_offset = 4;
     repeated Event events = 5;
 }
+
+message Record {
+    string instance = 1;
+    google.protobuf.Timestamp timestamp = 2;
+    repeated Tag tags = 3;
+}

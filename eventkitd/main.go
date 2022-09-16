@@ -7,7 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"net/netip"
+	"net"
 	"runtime"
 	"time"
 
@@ -23,7 +23,7 @@ var (
 	flagWorkers = flag.Int("workers", runtime.NumCPU(), "number of workers")
 )
 
-func eventToEventMap(event *pb.Event, instance string, source netip.AddrPort, received time.Time) eventkit.EventMap {
+func eventToEventMap(event *pb.Event, application,instance string, source *net.UDPAddr, received time.Time) eventkit.EventMap {
 	em := make(eventkit.EventMap, len(event.Tags)+3)
 	for _, tag := range event.Tags {
 		if len(tag.Key) == 0 {
@@ -50,25 +50,39 @@ func eventToEventMap(event *pb.Event, instance string, source netip.AddrPort, re
 	}
 	name := event.Name
 	if name == "" {
-		name = em["name"]
+		var ok bool
+		name, ok = em["name"].(string)
+		if !ok {
+			name = ""
+		}
 	}
 	delete(em, "name")
 	scope := event.Scope
 	if event.Scope == nil {
-		scope = em["scope"]
+		var ok bool
+		scope, ok = em["scope"].([]string)
+		if !ok {
+			scope = nil
+		}
 	}
 	delete(em, "scope")
 	if event.TimestampOffset != nil {
 		em["timestamp"] = received.Add(event.TimestampOffset.AsDuration())
 	}
 	em["instance"] = instance
-	em["packet_source"] =
-	return em,
+	em["source"] = source
+	path := computePath(application, scope, name)
+	_ = path
+	return em
 }
 
-func handleParsedPacket(packet *pb.Packet, source netip.AddrPort, received time.Time) error {
+func computePath(application string, scope []string, name string) string {
+	return "TODO"
+}
+
+func handleParsedPacket(packet *pb.Packet, source *net.UDPAddr, received time.Time) error {
 	for _, event := range packet.Events {
-		fmt.Println(eventToEventMap(event, received))
+		fmt.Println(eventToEventMap(event, packet.Application,packet.Instance, source, received))
 	}
 	return nil
 }
@@ -129,3 +143,4 @@ func main() {
 		queue <- packet
 	}
 }
+
