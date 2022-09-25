@@ -15,7 +15,6 @@ message Tag {
         bytes bytes = 5;
         bool bool = 6;
         google.protobuf.Duration duration = 7;
-        google.protobuf.Duration timestamp_offset = 8;
     }
 }
 
@@ -36,6 +35,8 @@ message Packet {
 
 message Record {
     string instance = 1;
-    google.protobuf.Timestamp timestamp = 2;
-    repeated Tag tags = 3;
+    string source_addr = 2;
+    google.protobuf.Timestamp timestamp = 3;
+    google.protobuf.Duration timestamp_correction = 4;
+    repeated Tag tags = 5;
 }

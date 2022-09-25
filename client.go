@@ -2,10 +2,10 @@ package eventkit
 
 import (
 	"bytes"
-	"compress/zlib"
 	"net"
 	"time"
 
+	"github.com/klauspost/compress/zlib"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -24,7 +24,7 @@ type UDPClient struct {
 	Application string
 	Instance    string
 
-	submitQueue chan EventMap
+	submitQueue chan *Event
 }
 
 func NewUDPClient(application, instance, addr string) *UDPClient {
@@ -32,7 +32,7 @@ func NewUDPClient(application, instance, addr string) *UDPClient {
 		Application: application,
 		Instance:    instance,
 
-		submitQueue: make(chan EventMap, queueDepth),
+		submitQueue: make(chan *Event, queueDepth),
 	}
 	go c.run(addr)
 	return c
@@ -103,7 +103,7 @@ func newOutgoingPacket(application, instance string) *outgoingPacket {
 	return op
 }
 
-func (op *outgoingPacket) finalize() {
+func (op *outgoingPacket) finalize() []byte {
 	data, err := proto.Marshal(&pb.Packet{
 		SendOffset: durationpb.New(time.Since(op.startTime)),
 	})
@@ -120,65 +120,16 @@ func (op *outgoingPacket) finalize() {
 	if err != nil {
 		panic(err)
 	}
+	return op.buf.Bytes()
 }
 
-func (op *outgoingPacket) addEvent(em EventMap) (full bool) {
+func (op *outgoingPacket) addEvent(ev *Event) (full bool) {
 	var v pb.Event
 
-tagsLoop:
-	for key, val := range em {
-		switch key {
-		case "name":
-			v.Name = val.(string)
-		case "scope":
-			v.Scope = val.([]string)
-		case "timestamp":
-			v.TimestampOffset = durationpb.New(val.(time.Time).Sub(op.startTime))
-		default:
-			tag := pb.Tag{
-				Key: key,
-			}
-			switch v := val.(type) {
-			case string:
-				tag.Value = &pb.Tag_String_{String_: v}
-			case int64:
-				tag.Value = &pb.Tag_Int64{Int64: int64(v)}
-			case uint64:
-				tag.Value = &pb.Tag_Int64{Int64: int64(v)}
-			case int:
-				tag.Value = &pb.Tag_Int64{Int64: int64(v)}
-			case uint:
-				tag.Value = &pb.Tag_Int64{Int64: int64(v)}
-			case int32:
-				tag.Value = &pb.Tag_Int64{Int64: int64(v)}
-			case uint32:
-				tag.Value = &pb.Tag_Int64{Int64: int64(v)}
-			case int16:
-				tag.Value = &pb.Tag_Int64{Int64: int64(v)}
-			case uint16:
-				tag.Value = &pb.Tag_Int64{Int64: int64(v)}
-			case int8:
-				tag.Value = &pb.Tag_Int64{Int64: int64(v)}
-			case uint8:
-				tag.Value = &pb.Tag_Int64{Int64: int64(v)}
-			case float64:
-				tag.Value = &pb.Tag_Double{Double: float64(v)}
-			case float32:
-				tag.Value = &pb.Tag_Double{Double: float64(v)}
-			case bool:
-				tag.Value = &pb.Tag_Bool{Bool: v}
-			case []byte:
-				tag.Value = &pb.Tag_Bytes{Bytes: v}
-			case time.Duration:
-				tag.Value = &pb.Tag_Duration{Duration: durationpb.New(v)}
-			case time.Time:
-				tag.Value = &pb.Tag_TimestampOffset{TimestampOffset: durationpb.New(v.Sub(op.startTime))}
-			default:
-				continue tagsLoop
-			}
-			v.Tags = append(v.Tags, &tag)
-		}
-	}
+	v.Name = ev.Name
+	v.Scope = ev.Scope
+	v.TimestampOffset = durationpb.New(ev.Timestamp.Sub(op.startTime))
+	v.Tags = ev.Tags
 
 	data, err := proto.Marshal(&pb.Packet{Events: []*pb.Event{&v}})
 	if err != nil {
@@ -208,8 +159,7 @@ func (c *UDPClient) run(addr string) {
 	p := newOutgoingPacket(c.Application, c.Instance)
 
 	send := func() {
-		p.finalize()
-		_ = c.send(p.buf.Bytes(), addr)
+		_ = c.send(p, addr)
 		p = newOutgoingPacket(c.Application, c.Instance)
 	}
 
@@ -227,7 +177,7 @@ func (c *UDPClient) run(addr string) {
 	}
 }
 
-func (c *UDPClient) send(packet []byte, addr string) error {
+func (c *UDPClient) send(packet *outgoingPacket, addr string) error {
 	laddr, err := net.ResolveUDPAddr("udp", addr)
 	if err != nil {
 		return err
@@ -237,13 +187,14 @@ func (c *UDPClient) send(packet []byte, addr string) error {
 		return err
 	}
 	defer conn.Close()
-	_, _, err = conn.WriteMsgUDP(packet, nil, nil)
+	_, _, err = conn.WriteMsgUDP(packet.finalize(), nil, nil)
 	return err
 }
 
-func (c *UDPClient) QueueSend(event EventMap) {
+func (c *UDPClient) Submit(event *Event) {
 	select {
 	case c.submitQueue <- event:
 	default:
 	}
 }
+

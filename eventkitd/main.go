@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"compress/zlib"
 	"errors"
 	"flag"
 	"fmt"
@@ -11,10 +10,12 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/klauspost/compress/zlib"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/jtolio/eventkit"
 	"github.com/jtolio/eventkit/pb"
 )
 
@@ -23,66 +24,39 @@ var (
 	flagWorkers = flag.Int("workers", runtime.NumCPU(), "number of workers")
 )
 
-func eventToEventMap(event *pb.Event, application,instance string, source *net.UDPAddr, received time.Time) eventkit.EventMap {
-	em := make(eventkit.EventMap, len(event.Tags)+3)
-	for _, tag := range event.Tags {
-		if len(tag.Key) == 0 {
-			continue
-		}
-		switch v := tag.GetValue().(type) {
-		case *pb.Tag_String_:
-			em[tag.Key] = v.String_
-		case *pb.Tag_Int64:
-			em[tag.Key] = v.Int64
-		case *pb.Tag_Double:
-			em[tag.Key] = v.Double
-		case *pb.Tag_Bytes:
-			em[tag.Key] = v.Bytes
-		case *pb.Tag_Bool:
-			em[tag.Key] = v.Bool
-		case *pb.Tag_Duration:
-			em[tag.Key] = v.Duration.AsDuration()
-		case *pb.Tag_TimestampOffset:
-			em[tag.Key] = received.Add(v.TimestampOffset.AsDuration())
-		default:
-			continue
-		}
-	}
-	name := event.Name
-	if name == "" {
-		var ok bool
-		name, ok = em["name"].(string)
-		if !ok {
-			name = ""
-		}
-	}
-	delete(em, "name")
-	scope := event.Scope
-	if event.Scope == nil {
-		var ok bool
-		scope, ok = em["scope"].([]string)
-		if !ok {
-			scope = nil
-		}
-	}
-	delete(em, "scope")
-	if event.TimestampOffset != nil {
-		em["timestamp"] = received.Add(event.TimestampOffset.AsDuration())
-	}
-	em["instance"] = instance
-	em["source"] = source
-	path := computePath(application, scope, name)
-	_ = path
-	return em
-}
+func eventToRecord(packet *pb.Packet, event *pb.Event, source *net.UDPAddr, received time.Time) (rv *pb.Record, path string) {
+	var record pb.Record
+	record.Instance = packet.Instance
+	record.Tags = event.Tags
+	record.SourceAddr = source.String()
 
-func computePath(application string, scope []string, name string) string {
-	return "TODO"
+	// the event timestamp and the packet send timestamp are offsets from the packet's
+	// start_timestamp, which is determined from the sender's system clock. the
+	// sender's system clock may potentially be way off. but, we know the time we received the
+	// packet. if we (falsely) assume that the packet was received instantaneously,
+	// we can correct all event timestamps to be against the same clock, even if the sender's
+	// clock is years off. this allows for more comparable times across events from across
+	// clients with different clocks, even if it means we lose the packet transit time
+	// (which might be highly variable!).
+	//
+	//  start_time   event_time    send_time/received (assumed instaneous)
+	//       |            |                |
+	//
+
+	correctedStart := received.Add(-packet.SendOffset.AsDuration())
+	eventTime := correctedStart.Add(event.TimestampOffset.AsDuration())
+	record.Timestamp = timestamppb.New(eventTime)
+	record.TimestampCorrection = durationpb.New(correctedStart.Sub(packet.StartTimestamp.AsTime()))
+
+	return &record, computePath(eventTime, packet.Application, event.Scope, event.Name)
 }
 
 func handleParsedPacket(packet *pb.Packet, source *net.UDPAddr, received time.Time) error {
 	for _, event := range packet.Events {
-		fmt.Println(eventToEventMap(event, packet.Application,packet.Instance, source, received))
+		record, path := eventToRecord(packet, event, source, received)
+		_ = record
+		_ = path
+		// TODO
 	}
 	return nil
 }

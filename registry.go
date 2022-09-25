@@ -1,11 +1,22 @@
 package eventkit
 
-type Sender interface {
-	QueueSend(EventMap)
+import (
+	"time"
+)
+
+type Event struct {
+	Name      string
+	Scope     []string
+	Timestamp time.Time
+	Tags      []Tag
+}
+
+type Destination interface {
+	Submit(*Event)
 }
 
 type Registry struct {
-	senders []Sender
+	dests []Destination
 }
 
 func NewRegistry() *Registry { return &Registry{} }
@@ -17,20 +28,18 @@ func (r *Registry) Scope(name string) *Scope {
 	}
 }
 
-// AddOutput adds an output to the registry. Do not call AddOutput if
-// Submit might be called concurrently. It is expected that AddOutput
-// will be called at initialization time before any events.
-func (r *Registry) AddOutput(sender Sender) {
-	r.senders = append(r.senders, sender)
+// AddDestination adds an output to the registry. Do not call
+// AddDestination if (*Registry).Submit might be called
+// concurrently. It is expected that AddDestination will be
+// called at initialization time before any events.
+func (r *Registry) AddDestination(dest Destination) {
+	r.dests = append(r.dests, dest)
 }
 
-type EventMap map[string]interface{}
-
-// Submit takes an EventMap. It is likely that all output destinations
-// will drop events that don't have "name", "scope", or "timestamp" fields
-// specified. Using a *Scope's Event helper will help you get this right.
-func (r *Registry) Submit(em EventMap) {
-	for _, sender := range r.senders {
-		sender.QueueSend(em)
+// Submit submits an Event to all added Destinations.
+func (r *Registry) Submit(e *Event) {
+	for _, dest := range r.dests {
+		dest.Submit(e)
 	}
 }
+
