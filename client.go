@@ -14,10 +14,12 @@ import (
 )
 
 const (
+	// TODO: configurable
 	queueDepth           = 100
 	maxUncompressedBytes = 1000
 	compressionLevel     = zlib.BestCompression
-	flushInterval        = 15 * time.Second
+	// TODO: jitter
+	flushInterval = 15 * time.Second
 )
 
 type UDPClient struct {
