@@ -16,8 +16,8 @@ func NewSomething() *Something { return &Something{} }
 
 func (s *Something) Interesting(ctx context.Context) (err error) {
 	pkg.Event("interesting",
-		eventkit.TagInt64("size", 3),
-		eventkit.TagString("url", "http://google.com"),
+		eventkit.Int64("size", 3),
+		eventkit.String("url", "http://google.com"),
 	)
 	return nil
 }
@@ -34,4 +34,3 @@ func main() {
 	}
 	time.Sleep(30 * time.Second)
 }
-
