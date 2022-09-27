@@ -27,16 +27,18 @@ message Event {
 
 message Packet {
     string application = 1;
-    string instance = 2;
-    google.protobuf.Timestamp start_timestamp = 3;
-    google.protobuf.Duration send_offset = 4;
-    repeated Event events = 5;
+    string application_version = 2;
+    string instance = 3;
+    google.protobuf.Timestamp start_timestamp = 4;
+    google.protobuf.Duration send_offset = 5;
+    repeated Event events = 6;
 }
 
 message Record {
     string instance = 1;
-    string source_addr = 2;
-    google.protobuf.Timestamp timestamp = 3;
-    google.protobuf.Duration timestamp_correction = 4;
-    repeated Tag tags = 5;
+    string application_version = 2;
+    string source_addr = 3;
+    google.protobuf.Timestamp timestamp = 4;
+    google.protobuf.Duration timestamp_correction = 5;
+    repeated Tag tags = 6;
 }

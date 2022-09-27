@@ -25,15 +25,17 @@ const (
 
 type UDPClient struct {
 	Application string
+	Version     string
 	Instance    string
 
 	submitQueue chan *Event
 	addr        string
 }
 
-func NewUDPClient(application, instance, addr string) *UDPClient {
+func NewUDPClient(application, version, instance, addr string) *UDPClient {
 	c := &UDPClient{
 		Application: application,
+		Version:     version,
 		Instance:    instance,
 		addr:        addr,
 		submitQueue: make(chan *Event, queueDepth),
@@ -76,7 +78,7 @@ type outgoingPacket struct {
 	startTime time.Time
 }
 
-func newOutgoingPacket(application, instance string) *outgoingPacket {
+func (c *UDPClient) newOutgoingPacket() *outgoingPacket {
 	op := &outgoingPacket{startTime: time.Now()}
 	_, err := op.buf.Write([]byte("EK"))
 	if err != nil {
@@ -88,9 +90,10 @@ func newOutgoingPacket(application, instance string) *outgoingPacket {
 	}
 
 	data, err := proto.Marshal(&pb.Packet{
-		Application:    application,
-		Instance:       instance,
-		StartTimestamp: timestamppb.New(op.startTime),
+		Application:        c.application,
+		ApplicationVersion: c.version,
+		Instance:           c.instance,
+		StartTimestamp:     timestamppb.New(op.startTime),
 	})
 	if err != nil {
 		panic(err)
@@ -159,11 +162,11 @@ func (c *UDPClient) Run(ctx context.Context) {
 	ticker := time.NewTicker(flushInterval)
 	defer ticker.Stop()
 
-	p := newOutgoingPacket(c.Application, c.Instance)
+	p := c.newOutgoingPacket()
 
 	send := func() {
 		_ = c.send(p, c.addr)
-		p = newOutgoingPacket(c.Application, c.Instance)
+		p = c.newOutgoingPacket()
 	}
 
 	for {

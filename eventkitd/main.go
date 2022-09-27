@@ -26,6 +26,7 @@ var (
 
 func eventToRecord(packet *pb.Packet, event *pb.Event, source *net.UDPAddr, received time.Time) (rv *pb.Record, path string) {
 	var record pb.Record
+	record.ApplicationVersion = packet.ApplicationVersion
 	record.Instance = packet.Instance
 	record.Tags = event.Tags
 	record.SourceAddr = source.String()
@@ -117,4 +118,3 @@ func main() {
 		queue <- packet
 	}
 }
-
