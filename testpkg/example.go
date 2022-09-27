@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"time"
-
 	"github.com/jtolio/eventkit"
+	"golang.org/x/sync/errgroup"
+	"time"
 )
 
 var pkg = eventkit.Package()
@@ -23,14 +23,33 @@ func (s *Something) Interesting(ctx context.Context) (err error) {
 }
 
 func main() {
-	eventkit.DefaultRegistry.AddDestination(eventkit.NewUDPClient("testapp", "testinst", "localhost:9002"))
+	client := eventkit.NewUDPClient("testapp", "testinst", "localhost:9002")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	s := NewSomething()
-	for i := 0; i < 10; i++ {
-		err := s.Interesting(context.Background())
-		if err != nil {
-			panic(err)
+	w := errgroup.Group{}
+	w.Go(func() error {
+		client.Run(ctx)
+		return nil
+	})
+
+	eventkit.DefaultRegistry.AddDestination(client)
+
+	w.Go(func() error {
+		s := NewSomething()
+		for i := 0; i < 10; i++ {
+			err := s.Interesting(context.Background())
+			if err != nil {
+				return err
+			}
+			time.Sleep(100 * time.Millisecond)
 		}
+		cancel()
+		return nil
+	})
+	err := w.Wait()
+	if err != nil {
+		panic(err)
+
 	}
-	time.Sleep(30 * time.Second)
 }
