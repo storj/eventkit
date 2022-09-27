@@ -27,11 +27,9 @@ func pathEscapeTo(val string, out *strings.Builder) {
 	}
 }
 
-func computePath(timestamp time.Time, application string, scope []string, name string) string {
+func computePath(timestamp time.Time, scope []string, name string) string {
 	var out strings.Builder
 	out.WriteString(timestamp.Format("2006-01/02-15/"))
-	pathEscapeTo(application, &out)
-	out.WriteByte('/')
 	for i, s := range scope {
 		if i != 0 {
 			out.WriteString("_-")
@@ -42,4 +40,3 @@ func computePath(timestamp time.Time, application string, scope []string, name s
 	pathEscapeTo(name, &out)
 	return out.String()
 }
-

@@ -26,6 +26,8 @@ var (
 
 func eventToRecord(packet *pb.Packet, event *pb.Event, source *net.UDPAddr, received time.Time) (rv *pb.Record, path string) {
 	var record pb.Record
+	record.Application = packet.Application
+	record.ApplicationVersion = packet.ApplicationVersion
 	record.Instance = packet.Instance
 	record.Tags = event.Tags
 	record.SourceAddr = source.String()
@@ -48,7 +50,7 @@ func eventToRecord(packet *pb.Packet, event *pb.Event, source *net.UDPAddr, rece
 	record.Timestamp = timestamppb.New(eventTime)
 	record.TimestampCorrection = durationpb.New(correctedStart.Sub(packet.StartTimestamp.AsTime()))
 
-	return &record, computePath(eventTime, packet.Application, event.Scope, event.Name)
+	return &record, computePath(eventTime, event.Scope, event.Name)
 }
 
 func handleParsedPacket(packet *pb.Packet, source *net.UDPAddr, received time.Time) error {
@@ -117,4 +119,3 @@ func main() {
 		queue <- packet
 	}
 }
-

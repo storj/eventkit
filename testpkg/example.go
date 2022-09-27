@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
+	"time"
+
 	"github.com/jtolio/eventkit"
 	"golang.org/x/sync/errgroup"
-	"time"
 )
 
 var pkg = eventkit.Package()
@@ -23,7 +24,7 @@ func (s *Something) Interesting(ctx context.Context) (err error) {
 }
 
 func main() {
-	client := eventkit.NewUDPClient("testapp", "testinst", "localhost:9002")
+	client := eventkit.NewUDPClient("testapp", "v2", "testinst", "localhost:9002")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
