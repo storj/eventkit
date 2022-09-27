@@ -1,18 +1,14 @@
 package main
 
 import (
-	"bytes"
-	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"runtime"
 	"time"
 
-	"github.com/klauspost/compress/zlib"
+	"github.com/jtolio/eventkit/transport"
 	"golang.org/x/sync/errgroup"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -63,35 +59,16 @@ func handleParsedPacket(packet *pb.Packet, source *net.UDPAddr, received time.Ti
 	return nil
 }
 
-func handlePacket(packet UDPPacket) error {
-	defer packet.Return()
-	if packet.n < 4 || string(packet.buf[:2]) != "EK" {
-		return errors.New("missing magic number")
-	}
-	zl, err := zlib.NewReader(bytes.NewReader(packet.buf[2:packet.n]))
-	if err != nil {
-		return err
-	}
-	buf, err := ioutil.ReadAll(zl)
-	if err != nil {
-		return err
-	}
-	err = zl.Close()
-	if err != nil {
-		return err
-	}
-	var data pb.Packet
-	err = proto.Unmarshal(buf, &data)
-	if err != nil {
-		return err
-	}
-	return handleParsedPacket(&data, packet.source, packet.ts)
+type Packet struct {
+	Packet     *pb.Packet
+	Source     *net.UDPAddr
+	ReceivedAt time.Time
 }
 
 func main() {
 	flag.Parse()
-	queue := make(chan UDPPacket, *flagWorkers*2)
-	source, err := ListenUDP(*flagAddr)
+	queue := make(chan *Packet, *flagWorkers*2)
+	listener, err := transport.ListenUDP(*flagAddr)
 	if err != nil {
 		panic(err)
 	}
@@ -100,7 +77,7 @@ func main() {
 	for i := 0; i < *flagWorkers; i++ {
 		eg.Go(func() error {
 			for packet := range queue {
-				err := handlePacket(packet)
+				err := handleParsedPacket(packet.Packet, packet.Source, packet.ReceivedAt)
 				if err != nil {
 					fmt.Println(err)
 				}
@@ -110,12 +87,17 @@ func main() {
 	}
 
 	for {
-		packet, err := source.Next()
+		packet, source, err := listener.Next()
 		if err != nil {
 			close(queue)
 			eg.Wait()
 			panic(err)
 		}
-		queue <- packet
+
+		queue <- &Packet{
+			Packet:     packet,
+			Source:     source,
+			ReceivedAt: time.Now(),
+		}
 	}
 }
