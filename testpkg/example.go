@@ -51,6 +51,5 @@ func main() {
 	err := w.Wait()
 	if err != nil {
 		panic(err)
-
 	}
 }
