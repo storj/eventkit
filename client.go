@@ -90,9 +90,9 @@ func (c *UDPClient) newOutgoingPacket() *outgoingPacket {
 	}
 
 	data, err := proto.Marshal(&pb.Packet{
-		Application:        c.application,
-		ApplicationVersion: c.version,
-		Instance:           c.instance,
+		Application:        c.Application,
+		ApplicationVersion: c.Version,
+		Instance:           c.Instance,
 		StartTimestamp:     timestamppb.New(op.startTime),
 	})
 	if err != nil {
