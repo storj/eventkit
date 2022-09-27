@@ -2,6 +2,7 @@ package eventkit
 
 import (
 	"bytes"
+	"context"
 	"net"
 	"time"
 
@@ -27,16 +28,16 @@ type UDPClient struct {
 	Instance    string
 
 	submitQueue chan *Event
+	addr        string
 }
 
 func NewUDPClient(application, instance, addr string) *UDPClient {
 	c := &UDPClient{
 		Application: application,
 		Instance:    instance,
-
+		addr:        addr,
 		submitQueue: make(chan *Event, queueDepth),
 	}
-	go c.run(addr)
 	return c
 }
 
@@ -154,14 +155,14 @@ func (op *outgoingPacket) addEvent(ev *Event) (full bool) {
 	return (op.written + trailerSize) > maxUncompressedBytes
 }
 
-func (c *UDPClient) run(addr string) {
+func (c *UDPClient) Run(ctx context.Context) {
 	ticker := time.NewTicker(flushInterval)
 	defer ticker.Stop()
 
 	p := newOutgoingPacket(c.Application, c.Instance)
 
 	send := func() {
-		_ = c.send(p, addr)
+		_ = c.send(p, c.addr)
 		p = newOutgoingPacket(c.Application, c.Instance)
 	}
 
@@ -175,6 +176,9 @@ func (c *UDPClient) run(addr string) {
 			if p.events > 0 {
 				send()
 			}
+		case <-ctx.Done():
+			send()
+			return
 		}
 	}
 }
@@ -199,4 +203,3 @@ func (c *UDPClient) Submit(event *Event) {
 	default:
 	}
 }
-
