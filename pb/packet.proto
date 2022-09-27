@@ -35,10 +35,11 @@ message Packet {
 }
 
 message Record {
-    string instance = 1;
+    string application = 1;
     string application_version = 2;
-    string source_addr = 3;
-    google.protobuf.Timestamp timestamp = 4;
-    google.protobuf.Duration timestamp_correction = 5;
-    repeated Tag tags = 6;
+    string instance = 3;
+    string source_addr = 4;
+    google.protobuf.Timestamp timestamp = 5;
+    google.protobuf.Duration timestamp_correction = 6;
+    repeated Tag tags = 7;
 }
