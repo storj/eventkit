@@ -2,13 +2,13 @@ package transport
 
 import (
 	"bytes"
+	"compress/zlib"
 	"errors"
 	"io/ioutil"
 	"net"
 	"sync"
 
 	"github.com/jtolio/eventkit/pb"
-	"github.com/klauspost/compress/zlib"
 	"google.golang.org/protobuf/proto"
 )
 
