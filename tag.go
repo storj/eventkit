@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/jtolio/eventkit/pb"
-	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 type Tag = *pb.Tag
@@ -47,6 +46,13 @@ func Bool(key string, val bool) Tag {
 func Duration(key string, val time.Duration) Tag {
 	return &pb.Tag{
 		Key:   key,
-		Value: &pb.Tag_Duration{Duration: durationpb.New(val)},
+		Value: &pb.Tag_DurationNs{DurationNs: int64(val)},
+	}
+}
+
+func Timestamp(key string, val time.Time) Tag {
+	return &pb.Tag{
+		Key:   key,
+		Value: &pb.Tag_Timestamp{Timestamp: pb.AsTimestamp(val)},
 	}
 }

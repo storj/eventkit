@@ -1,10 +1,12 @@
 syntax = "proto3";
 package eventkit;
 
-import "google/protobuf/timestamp.proto";
-import "google/protobuf/duration.proto";
-
 option go_package = "github.com/jtolio/eventkit/pb";
+
+message Timestamp {
+    int64 seconds = 1;
+    int32 nanos = 2;
+}
 
 message Tag {
     string key = 1;
@@ -14,14 +16,15 @@ message Tag {
         double double = 4;
         bytes bytes = 5;
         bool bool = 6;
-        google.protobuf.Duration duration = 7;
+        int64 duration_ns = 7;
+        Timestamp timestamp = 8;
     }
 }
 
 message Event {
     string name = 1;
     repeated string scope = 2;
-    google.protobuf.Duration timestamp_offset = 3;
+    int64 timestamp_offset_ns = 3;
     repeated Tag tags = 4;
 }
 
@@ -29,8 +32,8 @@ message Packet {
     string application = 1;
     string application_version = 2;
     string instance = 3;
-    google.protobuf.Timestamp start_timestamp = 4;
-    google.protobuf.Duration send_offset = 5;
+    Timestamp start_timestamp = 4;
+    int64 send_offset_ns = 5;
     repeated Event events = 6;
 }
 
@@ -39,7 +42,7 @@ message Record {
     string application_version = 2;
     string instance = 3;
     string source_addr = 4;
-    google.protobuf.Timestamp timestamp = 5;
-    google.protobuf.Duration timestamp_correction = 6;
+    Timestamp timestamp = 5;
+    int64 timestamp_correction_ns = 6;
     repeated Tag tags = 7;
 }

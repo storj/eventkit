@@ -1,3 +1,3 @@
 package pb
 
-//go:generate protoc --go_out=. -I=. --go_opt=paths=source_relative packet.proto
+//go:generate protoc --gogo_out=paths=source_relative:. -I=. packet.proto

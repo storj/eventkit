@@ -9,8 +9,6 @@ import (
 
 	"github.com/jtolio/eventkit/transport"
 	"golang.org/x/sync/errgroup"
-	"google.golang.org/protobuf/types/known/durationpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/jtolio/eventkit/pb"
 )
@@ -41,10 +39,10 @@ func eventToRecord(packet *pb.Packet, event *pb.Event, source *net.UDPAddr, rece
 	//       |            |                |
 	//
 
-	correctedStart := received.Add(-packet.SendOffset.AsDuration())
-	eventTime := correctedStart.Add(event.TimestampOffset.AsDuration())
-	record.Timestamp = timestamppb.New(eventTime)
-	record.TimestampCorrection = durationpb.New(correctedStart.Sub(packet.StartTimestamp.AsTime()))
+	correctedStart := received.Add(-time.Duration(packet.SendOffsetNs))
+	eventTime := correctedStart.Add(time.Duration(event.TimestampOffsetNs))
+	record.Timestamp = pb.AsTimestamp(eventTime)
+	record.TimestampCorrectionNs = int64(correctedStart.Sub(packet.StartTimestamp.AsTime()))
 
 	return &record, computePath(eventTime, event.Scope, event.Name)
 }
@@ -55,6 +53,7 @@ func handleParsedPacket(packet *pb.Packet, source *net.UDPAddr, received time.Ti
 		_ = record
 		_ = path
 		// TODO
+		fmt.Println(path)
 	}
 	return nil
 }

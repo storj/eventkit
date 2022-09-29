@@ -8,8 +8,9 @@ import (
 	"net"
 	"sync"
 
+	"github.com/gogo/protobuf/proto"
+
 	"github.com/jtolio/eventkit/pb"
-	"google.golang.org/protobuf/proto"
 )
 
 // ListenUDP sets up a UDP server that receives packets containing events.

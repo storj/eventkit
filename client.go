@@ -8,9 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/durationpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"github.com/gogo/protobuf/proto"
 
 	"github.com/jtolio/eventkit/pb"
 	"github.com/jtolio/eventkit/utils"
@@ -89,7 +87,7 @@ func (c *UDPClient) newOutgoingPacket() *outgoingPacket {
 		Application:        c.Application,
 		ApplicationVersion: c.Version,
 		Instance:           c.Instance,
-		StartTimestamp:     timestamppb.New(op.startTime),
+		StartTimestamp:     pb.AsTimestamp(op.startTime),
 	})
 	if err != nil {
 		panic(err)
@@ -107,7 +105,7 @@ func (c *UDPClient) newOutgoingPacket() *outgoingPacket {
 
 func (op *outgoingPacket) finalize() []byte {
 	data, err := proto.Marshal(&pb.Packet{
-		SendOffset: durationpb.New(time.Since(op.startTime)),
+		SendOffsetNs: int64(time.Since(op.startTime)),
 	})
 	if err != nil {
 		panic(err)
@@ -130,7 +128,7 @@ func (op *outgoingPacket) addEvent(ev *Event) (full bool) {
 
 	v.Name = ev.Name
 	v.Scope = ev.Scope
-	v.TimestampOffset = durationpb.New(ev.Timestamp.Sub(op.startTime))
+	v.TimestampOffsetNs = int64(ev.Timestamp.Sub(op.startTime))
 	v.Tags = ev.Tags
 
 	data, err := proto.Marshal(&pb.Packet{Events: []*pb.Event{&v}})
