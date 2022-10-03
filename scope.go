@@ -21,4 +21,3 @@ func (s *Scope) Event(name string, tags ...Tag) {
 		Tags:      tags,
 	})
 }
-
