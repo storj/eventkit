@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/proto"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/jtolio/eventkit/pb"
 	"github.com/jtolio/eventkit/utils"
@@ -156,7 +157,12 @@ func (c *UDPClient) Run(ctx context.Context) {
 	c.init()
 
 	ticker := utils.NewJitteredTicker(c.FlushInterval)
-	defer ticker.Stop()
+	var background errgroup.Group
+	defer func() { _ = background.Wait() }()
+	background.Go(func() error {
+		ticker.Run(ctx)
+		return nil
+	})
 
 	p := c.newOutgoingPacket()
 
