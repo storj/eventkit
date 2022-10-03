@@ -42,4 +42,3 @@ func (r *Registry) Submit(e *Event) {
 		dest.Submit(e)
 	}
 }
-

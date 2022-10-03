@@ -190,16 +190,22 @@ func (c *UDPClient) Run(ctx context.Context) {
 	}
 }
 
-func (c *UDPClient) send(packet *outgoingPacket, addr string) error {
+func (c *UDPClient) send(packet *outgoingPacket, addr string) (err error) {
 	laddr, err := net.ResolveUDPAddr("udp", addr)
 	if err != nil {
 		return err
 	}
+
 	conn, err := net.DialUDP("udp", nil, laddr)
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer func() {
+		if errClose := conn.Close(); err == nil && errClose != nil {
+			err = errClose
+		}
+	}()
+
 	_, _, err = conn.WriteMsgUDP(packet.finalize(), nil, nil)
 	return err
 }
