@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"math/rand"
 	"sync"
 	"time"
@@ -14,33 +15,30 @@ type JitteredTicker struct {
 }
 
 func NewJitteredTicker(interval time.Duration) *JitteredTicker {
-	t := &JitteredTicker{
+	return &JitteredTicker{
 		C:        make(chan struct{}, 1),
 		interval: interval,
-		closed:   make(chan struct{}),
 	}
-	go t.tick()
-	return t
 }
 
-func (t *JitteredTicker) tick() {
+func (t *JitteredTicker) Run(ctx context.Context) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	timer := time.NewTimer(Jitter(r, t.interval))
 	defer timer.Stop()
 
 	for {
 		select {
-		case <-t.closed:
+		case <-ctx.Done():
 			return
 		case <-timer.C:
-			t.C <- struct{}{}
+			select {
+			case t.C <- struct{}{}:
+			case <-ctx.Done():
+				return
+			}
 			timer.Reset(Jitter(r, t.interval))
 		}
 	}
-}
-
-func (t *JitteredTicker) Stop() {
-	t.closeOnce.Do(func() { close(t.closed) })
 }
 
 func Jitter(r *rand.Rand, t time.Duration) time.Duration {
