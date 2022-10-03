@@ -1,14 +1,21 @@
 package main
 
 import (
+	"compress/zlib"
 	"os"
 	"path/filepath"
 	"sync"
+
+	"github.com/gogo/protobuf/proto"
+
+	"github.com/jtolio/eventkit/eventkitd/utils/protostream"
+	"github.com/jtolio/eventkit/eventkitd/utils/resumablecompressed"
 )
 
 type handle struct {
-	mtx sync.Mutex
-	fh  *os.File
+	mtx   sync.Mutex
+	close func() error
+	ps    *protostream.Writer
 }
 
 type Writer struct {
@@ -35,14 +42,14 @@ func (w *Writer) DropAll() {
 func (handle *handle) Close() {
 	handle.mtx.Lock()
 	defer handle.mtx.Unlock()
-	_ = handle.fh.Close()
+	_ = handle.close()
 }
 
 func (w *Writer) Close() {
 	w.DropAll()
 }
 
-func (w *Writer) Append(path string, data []byte) error {
+func (w *Writer) Append(path string, pb proto.Message) error {
 	w.mtx.Lock()
 	h, ok := w.handles[path]
 	if !ok {
@@ -56,8 +63,17 @@ func (w *Writer) Append(path string, data []byte) error {
 			w.mtx.Unlock()
 			return err
 		}
+
+		rcw, err := resumablecompressed.NewWriter(fh, zlib.DefaultCompression)
+		if err != nil {
+			fh.Close()
+			w.mtx.Unlock()
+			return err
+		}
+
 		h = &handle{
-			fh: fh,
+			close: rcw.Close,
+			ps:    protostream.NewWriter(rcw),
 		}
 		w.handles[path] = h
 	}
@@ -66,6 +82,5 @@ func (w *Writer) Append(path string, data []byte) error {
 	defer h.mtx.Unlock()
 	w.mtx.Unlock()
 
-	_, err := h.fh.Write(data)
-	return err
+	return h.ps.Marshal(pb)
 }
