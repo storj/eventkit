@@ -89,7 +89,7 @@ func main() {
 		packet, source, err := listener.Next()
 		if err != nil {
 			close(queue)
-			eg.Wait()
+			_ = eg.Wait()
 			panic(err)
 		}
 
