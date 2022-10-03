@@ -28,10 +28,14 @@ func (w *Writer) DropAll() {
 
 	for path, handle := range w.handles {
 		delete(w.handles, path)
-		handle.mtx.Lock()
-		handle.fh.Close()
-		handle.mtx.Unlock()
+		handle.Close()
 	}
+}
+
+func (handle *handle) Close() {
+	handle.mtx.Lock()
+	defer handle.mtx.Unlock()
+	_ = handle.fh.Close()
 }
 
 func (w *Writer) Close() {
@@ -59,9 +63,9 @@ func (w *Writer) Append(path string, data []byte) error {
 	}
 
 	h.mtx.Lock()
+	defer h.mtx.Unlock()
 	w.mtx.Unlock()
+
 	_, err := h.fh.Write(data)
-	h.mtx.Unlock()
 	return err
 }
-
