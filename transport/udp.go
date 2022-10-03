@@ -67,6 +67,10 @@ func (u *UDPListener) Next() (packet *pb.Packet, source *net.UDPAddr, err error)
 	return packet, source, err
 }
 
+func (u *UDPListener) Close() error{
+	return u.conn.Close()
+}
+
 func parsePacket(n int, buf []byte) (*pb.Packet, error) {
 	if n < 4 || string(buf[:2]) != "EK" {
 		return nil, errors.New("missing magic number")
