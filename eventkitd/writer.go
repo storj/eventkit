@@ -16,7 +16,7 @@ type Writer struct {
 	handles map[string]*handle
 }
 
-func NewWriter() *Writer {
+func NewWriter() *Writer { // nolint:deadcode
 	return &Writer{
 		handles: map[string]*handle{},
 	}

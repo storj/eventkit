@@ -3,15 +3,12 @@ package utils
 import (
 	"context"
 	"math/rand"
-	"sync"
 	"time"
 )
 
 type JitteredTicker struct {
-	C         chan struct{}
-	interval  time.Duration
-	closeOnce sync.Once
-	closed    chan struct{}
+	C        chan struct{}
+	interval time.Duration
 }
 
 func NewJitteredTicker(interval time.Duration) *JitteredTicker {
