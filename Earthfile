@@ -1,6 +1,6 @@
 VERSION 0.6
 FROM golang:1.18
-WORKDIR /go/storj-up
+WORKDIR /go/eventkit
 
 lint:
     RUN --mount=type=cache,target=/root/.cache/go-build \
