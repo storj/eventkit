@@ -9,6 +9,7 @@ import (
 )
 
 func assert(t testing.TB, val bool) {
+	t.Helper()
 	if !val {
 		t.Fatal("assertion failed")
 	}
@@ -46,6 +47,12 @@ func TestResumable(t *testing.T) {
 	assert(t, err == nil)
 	data, err := io.ReadAll(r1)
 	assert(t, err == nil)
-	assert(t, string(data) == string(sample1[:])+string(sample2[:]))
+	assertEqual(t, string(data), string(sample1[:])+string(sample2[:]))
 	assert(t, r1.Close() == nil)
+}
+
+func assertEqual(t testing.TB, val1, val2 string) {
+	if val1 != val2 {
+		t.Fatalf("val1 (len %d) != val2 (len %d)", len(val1), len(val2))
+	}
 }
