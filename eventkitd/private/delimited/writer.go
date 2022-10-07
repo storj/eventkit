@@ -7,7 +7,7 @@ import (
 )
 
 const frameHeaderSize = 3 // (control byte + 2 bytes for size)
-const maxFrameSize = 1<<16 - frameHeaderSize
+const maxFrameSize = 1<<16 - 1
 
 type controlByte byte
 
@@ -18,7 +18,7 @@ const (
 
 type Writer struct {
 	base io.Writer
-	buf  bytes.Buffer
+	buf  bytes.Buffer // optimization TODO: replace with [maxFrameSize]byte
 }
 
 func NewWriter(base io.Writer) *Writer {

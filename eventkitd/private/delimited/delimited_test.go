@@ -7,105 +7,119 @@ import (
 	"testing"
 )
 
-func assert(val bool) {
+func assert(t testing.TB, val bool) {
+	t.Helper()
 	if !val {
-		panic("assertion failed")
+		t.Fatal("assertion failed")
+	}
+}
+
+func assertNoErr(t testing.TB, err error) {
+	t.Helper()
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 
 func TestDelimitedBasic(t *testing.T) {
+	t.Parallel()
+
 	var out bytes.Buffer
 	w := NewWriter(&out)
 	_, err := w.Write([]byte("hello, "))
-	assert(err == nil)
+	assert(t, err == nil)
 	_, err = w.Write([]byte("friend"))
-	assert(err == nil)
-	assert(w.Flush() == nil)
+	assert(t, err == nil)
+	assert(t, w.Flush() == nil)
 
-	r := NewReader(&out)
-	data, err := io.ReadAll(r)
-	assert(err == nil)
-	assert(string(data) == "hello, friend")
-	assert(!r.Delimited())
+	assertEqual(t, readAll(NewReader(&out)),
+		[]string{"hello, friend"})
 }
 
 func TestDelimitedFramed(t *testing.T) {
+	t.Parallel()
+
 	var sample [65536 + 10]byte
 	rand.Read(sample[:])
 
 	var out bytes.Buffer
 	w := NewWriter(&out)
 	_, err := w.Write(sample[:])
-	assert(err == nil)
+	assert(t, err == nil)
 	_, err = w.Write(sample[:])
-	assert(err == nil)
+	assert(t, err == nil)
 	_, err = w.Write(sample[:])
-	assert(err == nil)
-	assert(w.Flush() == nil)
+	assert(t, err == nil)
+	assert(t, w.Flush() == nil)
 
-	r := NewReader(&out)
-	data, err := io.ReadAll(r)
-	assert(err == nil)
-	assert(string(data) == string(sample[:])+string(sample[:])+string(sample[:]))
-	assert(!r.Delimited())
+	assertEqual(t, readAll(NewReader(&out)),
+		[]string{string(sample[:]) + string(sample[:]) + string(sample[:])})
 }
 
 func readAll(r *Reader) []string {
 	var rv []string
-	for {
+	for r.Next() {
 		data, err := io.ReadAll(r)
 		if err != nil {
 			panic(err)
 		}
 		rv = append(rv, string(data))
-		if !r.Delimited() {
-			return rv
-		}
-		r.Advance()
 	}
+	err := r.Err()
+	if err != nil {
+		panic(err)
+	}
+	return rv
 }
 
-func assertEqual(a, b []string) {
-	assert(len(a) == len(b))
+func assertEqual(t testing.TB, a, b []string) {
+	t.Helper()
+	if len(a) != len(b) {
+		t.Fatalf("lengths of %d and %d unequal", len(a), len(b))
+	}
 	for i := 0; i < len(a); i++ {
-		assert(a[i] == b[i])
+		if a[i] != b[i] {
+			t.Fatalf("index %q of %q and %q unequal", i, a[i], b[i])
+		}
 	}
 }
 
 func TestDelimitedEdges(t *testing.T) {
+	t.Parallel()
+
 	var sample [65536 + 10]byte
 	rand.Read(sample[:])
 
 	var out bytes.Buffer
 	w := NewWriter(&out)
 	// empty
-	assert(w.Delimit() == nil)
+	assert(t, w.Delimit() == nil)
 	_, err := w.Write(sample[:])
-	assert(err == nil)
+	assert(t, err == nil)
 	_, err = w.Write(sample[:])
-	assert(err == nil)
+	assert(t, err == nil)
 	_, err = w.Write(sample[:])
-	assert(err == nil)
+	assert(t, err == nil)
 	// sample + sample + sample
-	assert(w.Delimit() == nil)
+	assert(t, w.Delimit() == nil)
 	// sample
 	_, err = w.Write(sample[:])
-	assert(err == nil)
-	assert(w.Delimit() == nil)
+	assert(t, err == nil)
+	assert(t, w.Delimit() == nil)
 	// empty
-	assert(w.Delimit() == nil)
+	assert(t, w.Delimit() == nil)
 	_, err = w.Write(sample[:])
-	assert(err == nil)
+	assert(t, err == nil)
 	_, err = w.Write(sample[:])
-	assert(err == nil)
+	assert(t, err == nil)
 	// sample + sample
-	assert(w.Delimit() == nil)
+	assert(t, w.Delimit() == nil)
 	// empty
-	assert(w.Delimit() == nil)
+	assert(t, w.Delimit() == nil)
 	// empty
 
 	data := readAll(NewReader(&out))
-	assertEqual(data, []string{
+	assertEqual(t, data, []string{
 		"",
 		string(sample[:]) + string(sample[:]) + string(sample[:]),
 		string(sample[:]),

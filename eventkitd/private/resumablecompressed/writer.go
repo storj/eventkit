@@ -4,7 +4,7 @@ import (
 	"compress/zlib"
 	"io"
 
-	"github.com/jtolio/eventkit/eventkitd/utils/delimited"
+	"github.com/jtolio/eventkit/eventkitd/private/delimited"
 )
 
 type Writer struct {

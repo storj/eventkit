@@ -12,6 +12,7 @@ func pathEscapeTo(val string, out *strings.Builder) {
 		case b >= 'a' && b <= 'z':
 			out.WriteByte(b)
 		case b >= 'A' && b <= 'Z':
+			out.WriteByte('+')
 			out.WriteByte(b)
 		case b >= '0' && b <= '9':
 			out.WriteByte(b)

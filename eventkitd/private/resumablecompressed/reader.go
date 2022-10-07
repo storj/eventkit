@@ -5,7 +5,7 @@ import (
 	"errors"
 	"io"
 
-	"github.com/jtolio/eventkit/eventkitd/utils/delimited"
+	"github.com/jtolio/eventkit/eventkitd/private/delimited"
 )
 
 type Reader struct {
@@ -20,9 +20,16 @@ func NewReader(base io.Reader) *Reader {
 	}
 }
 
-type readerFunc func(p []byte) (n int, err error)
+type measuredReader struct {
+	io.Reader
+	Count int64
+}
 
-func (f readerFunc) Read(p []byte) (n int, err error) { return f(p) }
+func (r *measuredReader) Read(p []byte) (n int, err error) {
+	n, err = r.Reader.Read(p)
+	r.Count += int64(n)
+	return n, err
+}
 
 func (r *Reader) Read(p []byte) (n int, err error) {
 	if r.current == nil {
@@ -30,14 +37,10 @@ func (r *Reader) Read(p []byte) (n int, err error) {
 			r.r.Advance()
 		}
 
-		var read int64
-		current, err := zlib.NewReader(readerFunc(func(p []byte) (n int, err error) {
-			n, err = r.r.Read(p)
-			read += int64(n)
-			return n, err
-		}))
+		mr := &measuredReader{Reader: r.r}
+		current, err := zlib.NewReader(mr)
 		if err != nil {
-			if errors.Is(err, io.ErrUnexpectedEOF) && read == 0 {
+			if errors.Is(err, io.ErrUnexpectedEOF) && mr.Count == 0 {
 				err = io.EOF
 			}
 			return 0, err

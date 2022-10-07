@@ -8,8 +8,8 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 
-	"github.com/jtolio/eventkit/eventkitd/utils/protostream"
-	"github.com/jtolio/eventkit/eventkitd/utils/resumablecompressed"
+	"github.com/jtolio/eventkit/eventkitd/private/protostream"
+	"github.com/jtolio/eventkit/eventkitd/private/resumablecompressed"
 )
 
 type handle struct {
@@ -66,8 +66,8 @@ func (w *Writer) Append(path string, pb proto.Message) error {
 
 		rcw, err := resumablecompressed.NewWriter(fh, zlib.DefaultCompression)
 		if err != nil {
-			fh.Close()
 			w.mtx.Unlock()
+			fh.Close()
 			return err
 		}
 
@@ -82,5 +82,7 @@ func (w *Writer) Append(path string, pb proto.Message) error {
 	defer h.mtx.Unlock()
 	w.mtx.Unlock()
 
+	// TODO: consider refactoring protostream to allow for marshaling before grabbing
+	// any locks
 	return h.ps.Marshal(pb)
 }

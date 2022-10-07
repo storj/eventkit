@@ -2,6 +2,7 @@ package protostream
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
 
 	"github.com/gogo/protobuf/proto"
@@ -23,7 +24,11 @@ func (r *Reader) Unmarshal(pb proto.Message) error {
 	if err != nil {
 		return err
 	}
-	buf := make([]byte, binary.BigEndian.Uint32(header[:]))
+	size := binary.BigEndian.Uint32(header[:])
+	if size > maxSerializedSize {
+		return fmt.Errorf("frame size larger than max")
+	}
+	buf := make([]byte, size)
 	_, err = io.ReadFull(r.base, buf)
 	if err != nil {
 		return err
