@@ -25,9 +25,11 @@ func TestResumable(t *testing.T) {
 	t.Parallel()
 
 	var sample1 [655360]byte
-	rand.Read(sample1[:])
+	_, err := rand.Read(sample1[:])
+	assert(t, err == nil)
 	var sample2 [655360]byte
-	rand.Read(sample2[:])
+	_, err = rand.Read(sample2[:])
+	assert(t, err == nil)
 
 	var out bytes.Buffer
 

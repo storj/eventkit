@@ -60,7 +60,6 @@ func (r *Reader) Read(p []byte) (n int, err error) {
 	if errors.Is(err, io.EOF) {
 		err = r.current.Close()
 		r.current = nil
-		io.Copy(io.Discard, r.r)
 	}
 	return n, err
 }

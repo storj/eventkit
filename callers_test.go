@@ -1,12 +1,18 @@
 package eventkit
 
 import (
-	"github.com/zeebo/assert"
 	"testing"
 )
 
+func assertEqual(t *testing.T, a, b interface{}) {
+	t.Helper()
+	if a != b {
+		t.Fatalf("%q != %q", a, b)
+	}
+}
+
 func TestCallerPackage(t *testing.T) {
-	assert.Equal(t, "/testing", callerPackage(1))
-	assert.Equal(t, "/runtime", callerPackage(2))
+	assertEqual(t, "/testing", callerPackage(1))
+	assertEqual(t, "/runtime", callerPackage(2))
 
 }

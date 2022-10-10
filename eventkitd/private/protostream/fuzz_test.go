@@ -1,4 +1,4 @@
-// go:build go1.18
+//go:build go1.18
 // +build go1.18
 
 package protostream
@@ -17,11 +17,11 @@ func FuzzBasic(f *testing.F) {
 	var out bytes.Buffer
 	err := NewWriter(&out).Marshal(&pb.Event{Name: "test event"})
 	if err != nil {
-		panic("unreached")
+		f.Fatal(err)
 	}
-	f.Add(string(out.Bytes()))
+	f.Add(out.String())
 
 	f.Fuzz(func(t *testing.T, data string) {
-		_ := NewReader(strings.NewReader(data)).Unmarsal(&pb.Event{})
+		_ = NewReader(strings.NewReader(data)).Unmarshal(&pb.Event{})
 	})
 }

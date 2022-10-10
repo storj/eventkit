@@ -14,13 +14,6 @@ func assert(t testing.TB, val bool) {
 	}
 }
 
-func assertNoErr(t testing.TB, err error) {
-	t.Helper()
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func TestDelimitedBasic(t *testing.T) {
 	t.Parallel()
 
@@ -40,11 +33,12 @@ func TestDelimitedFramed(t *testing.T) {
 	t.Parallel()
 
 	var sample [65536 + 10]byte
-	rand.Read(sample[:])
+	_, err := rand.Read(sample[:])
+	assert(t, err == nil)
 
 	var out bytes.Buffer
 	w := NewWriter(&out)
-	_, err := w.Write(sample[:])
+	_, err = w.Write(sample[:])
 	assert(t, err == nil)
 	_, err = w.Write(sample[:])
 	assert(t, err == nil)
@@ -88,13 +82,14 @@ func TestDelimitedEdges(t *testing.T) {
 	t.Parallel()
 
 	var sample [65536 + 10]byte
-	rand.Read(sample[:])
+	_, err := rand.Read(sample[:])
+	assert(t, err == nil)
 
 	var out bytes.Buffer
 	w := NewWriter(&out)
 	// empty
 	assert(t, w.Delimit() == nil)
-	_, err := w.Write(sample[:])
+	_, err = w.Write(sample[:])
 	assert(t, err == nil)
 	_, err = w.Write(sample[:])
 	assert(t, err == nil)
