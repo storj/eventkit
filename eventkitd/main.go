@@ -16,6 +16,7 @@ import (
 var (
 	flagAddr    = flag.String("addr", ":9002", "udp address to listen on")
 	flagWorkers = flag.Int("workers", runtime.NumCPU(), "number of workers")
+	flagPath    = flag.String("base-path", "./data/", "path to write to")
 )
 
 func eventToRecord(packet *pb.Packet, event *pb.Event, source *net.UDPAddr, received time.Time) (rv *pb.Record, path string) {
@@ -44,16 +45,16 @@ func eventToRecord(packet *pb.Packet, event *pb.Event, source *net.UDPAddr, rece
 	record.Timestamp = pb.AsTimestamp(eventTime)
 	record.TimestampCorrectionNs = int64(correctedStart.Sub(packet.StartTimestamp.AsTime()))
 
-	return &record, computePath(eventTime, event.Scope, event.Name)
+	return &record, computePath(*flagPath, eventTime, event.Scope, event.Name)
 }
 
-func handleParsedPacket(packet *pb.Packet, source *net.UDPAddr, received time.Time) error {
+func handleParsedPacket(writer *Writer, packet *pb.Packet, source *net.UDPAddr, received time.Time) error {
 	for _, event := range packet.Events {
 		record, path := eventToRecord(packet, event, source, received)
-		_ = record
-		_ = path
-		// TODO
-		fmt.Println(path)
+		err := writer.Append(path, record)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -71,12 +72,20 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	writer := NewWriter()
+
+	go func() {
+		t := time.NewTicker(15 * time.Second)
+		for range t.C {
+			writer.DropAll()
+		}
+	}()
 
 	var eg errgroup.Group
 	for i := 0; i < *flagWorkers; i++ {
 		eg.Go(func() error {
 			for packet := range queue {
-				err := handleParsedPacket(packet.Packet, packet.Source, packet.ReceivedAt)
+				err := handleParsedPacket(writer, packet.Packet, packet.Source, packet.ReceivedAt)
 				if err != nil {
 					fmt.Println(err)
 				}
