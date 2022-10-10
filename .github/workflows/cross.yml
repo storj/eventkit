@@ -13,11 +13,18 @@ jobs:
       fail-fast: false
       matrix:
         go-version: ['1.14', '1.19']
+        go-package: ['.', './eventkitd']
         os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
+        exclude:
+          - go-version: 1.14
+            go-package: './eventkitd'
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-go@v3
       with:
         go-version: ${{ matrix.go-version }}
     - run: go vet ./...
+      working-directory: ${{ matrix.go-package }}
     - run: go test -vet=off -v ./...
+      working-directory: ${{ matrix.go-package }}
+
