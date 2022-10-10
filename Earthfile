@@ -15,7 +15,11 @@ lint:
 
 test:
    COPY . .
-       RUN --mount=type=cache,target=/root/.cache/go-build \
+   RUN --mount=type=cache,target=/root/.cache/go-build \
+           --mount=type=cache,target=/go/pkg/mod \
+           go test ./...
+   WORKDIR /go/eventkit/eventkitd
+   RUN --mount=type=cache,target=/root/.cache/go-build \
            --mount=type=cache,target=/go/pkg/mod \
            go test ./...
 
