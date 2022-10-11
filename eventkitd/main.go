@@ -8,14 +8,17 @@ import (
 	"time"
 
 	"golang.org/x/sync/errgroup"
+	"gopkg.in/webhelp.v1/whlog"
 
 	"github.com/jtolio/eventkit/eventkitd/private/path"
+	"github.com/jtolio/eventkit/eventkitd/ui"
 	"github.com/jtolio/eventkit/pb"
 	"github.com/jtolio/eventkit/transport"
 )
 
 var (
 	flagAddr    = flag.String("addr", ":9002", "udp address to listen on")
+	flagUIAddr  = flag.String("ui-addr", ":8080", "tcp/http address to listen on")
 	flagWorkers = flag.Int("workers", runtime.NumCPU(), "number of workers")
 	flagPath    = flag.String("base-path", "./data/", "path to write to")
 )
@@ -94,6 +97,10 @@ func main() {
 			return nil
 		})
 	}
+
+	go func() {
+		panic(whlog.ListenAndServe(*flagUIAddr, ui.Handler(*flagPath)))
+	}()
 
 	for {
 		packet, source, err := listener.Next()
