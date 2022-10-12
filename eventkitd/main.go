@@ -7,10 +7,11 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/jtolio/eventkit/transport"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/jtolio/eventkit/eventkitd/private/path"
 	"github.com/jtolio/eventkit/pb"
+	"github.com/jtolio/eventkit/transport"
 )
 
 var (
@@ -19,7 +20,7 @@ var (
 	flagPath    = flag.String("base-path", "./data/", "path to write to")
 )
 
-func eventToRecord(packet *pb.Packet, event *pb.Event, source *net.UDPAddr, received time.Time) (rv *pb.Record, path string) {
+func eventToRecord(packet *pb.Packet, event *pb.Event, source *net.UDPAddr, received time.Time) (rv *pb.Record, recordPath string) {
 	var record pb.Record
 	record.Application = packet.Application
 	record.ApplicationVersion = packet.ApplicationVersion
@@ -45,7 +46,7 @@ func eventToRecord(packet *pb.Packet, event *pb.Event, source *net.UDPAddr, rece
 	record.Timestamp = pb.AsTimestamp(eventTime)
 	record.TimestampCorrectionNs = int64(correctedStart.Sub(packet.StartTimestamp.AsTime()))
 
-	return &record, computePath(*flagPath, eventTime, event.Scope, event.Name)
+	return &record, path.Compute(*flagPath, eventTime, event.Scope, event.Name)
 }
 
 func handleParsedPacket(writer *Writer, packet *pb.Packet, source *net.UDPAddr, received time.Time) error {
