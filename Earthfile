@@ -36,3 +36,19 @@ format:
    COPY +check-format/format.patch build/format.patch
    RUN git apply --allow-empty build/format.patch
    RUN git status
+
+build-image:
+    FROM storjlabs/ci
+    COPY .git .git
+    ARG TAG=$(git rev-parse --short HEAD)
+    ARG IMAGE=img.dev.storj.io/nightly/eventkitd
+    BUILD +build-tagged-image --TAG=$TAG --IMAGE=$IMAGE
+
+build-tagged-image:
+    ARG --required TAG
+    ARG --required IMAGE
+    FROM golang:1.18
+    WORKDIR /go/eventkit/eventkitd
+    COPY . /go/eventkit
+    RUN go install
+    SAVE IMAGE --push $IMAGE:$TAG $IMAGE:latest
