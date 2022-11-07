@@ -38,7 +38,8 @@ type UDPListener struct {
 
 // Next returns the next packet from UDP and it's associated source address. Should an error occur, then it is returned.
 // A source address may be returned alongside an error for further reporting in the event of abuse/debugging.
-func (u *UDPListener) Next() (packet *pb.Packet, source *net.UDPAddr, err error) {
+func (u *UDPListener) Next() (payload []byte, source *net.UDPAddr, err error) {
+	// TODO: bring back the sync.Pool for these byte buffers
 	var buf [10 * 1024]byte
 
 	n, source, err := u.conn.ReadFromUDP(buf[:])
@@ -46,20 +47,14 @@ func (u *UDPListener) Next() (packet *pb.Packet, source *net.UDPAddr, err error)
 		return nil, nil, err
 	}
 
-	// TODO: handle malformed packet more gracefully... return source address for further reporting
-	packet, err = parsePacket(buf[:n])
-	if err != nil {
-		return nil, source, err
-	}
-
-	return packet, source, err
+	return buf[:n], source, err
 }
 
 func (u *UDPListener) Close() error {
 	return u.conn.Close()
 }
 
-func parsePacket(buf []byte) (*pb.Packet, error) {
+func ParsePacket(buf []byte) (*pb.Packet, error) {
 	if len(buf) < 4 || string(buf[:2]) != "EK" {
 		return nil, errors.New("missing magic number")
 	}
