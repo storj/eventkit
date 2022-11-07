@@ -2,14 +2,15 @@ package main
 
 import (
 	"context"
+	"log"
+	"time"
+
 	tea "github.com/charmbracelet/bubbletea"
 	ui "github.com/elek/bubbles"
 	"github.com/jtolio/eventkit/transport"
 	"github.com/spf13/cobra"
 	"github.com/zeebo/errs/v2"
 	"golang.org/x/sync/errgroup"
-	"log"
-	"time"
 )
 
 func main() {
@@ -55,7 +56,11 @@ func run(address string) error {
 
 	eg.Go(func() error {
 		for {
-			packet, source, err := listener.Next()
+			payload, source, err := listener.Next()
+			if err != nil {
+				return errs.Wrap(err)
+			}
+			packet, err := transport.ParsePacket(payload)
 			if err != nil {
 				return errs.Wrap(err)
 			}
