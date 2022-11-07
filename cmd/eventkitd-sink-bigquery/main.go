@@ -62,8 +62,8 @@ func (r *Record) Save() (map[string]bigquery.Value, string, error) {
 			fields[field] = v.Bytes
 		case *pb.Tag_Double:
 			fields[field] = v.Double
-		case *pb.Tag_Duration:
-			fields[field] = v.Duration
+		case *pb.Tag_DurationNs:
+			fields[field] = v.DurationNs
 		case *pb.Tag_Int64:
 			fields[field] = v.Int64
 		case *pb.Tag_String_:
@@ -82,10 +82,10 @@ type BigQuerySink struct {
 // Receive is called when the server receive an event to process.
 func (b *BigQuerySink) Receive(ctx context.Context, packet *Packet) error {
 	records := make(map[string][]*Record)
-	correctedStart := packet.ReceivedAt.Add(-packet.Packet.SendOffset.AsDuration())
+	correctedStart := packet.ReceivedAt.Add(time.Duration(-packet.Packet.SendOffsetNs) * time.Nanosecond)
 
 	for _, event := range packet.Packet.Events {
-		eventTime := correctedStart.Add(event.TimestampOffset.AsDuration())
+		eventTime := correctedStart.Add(time.Duration(event.TimestampOffsetNs) * time.Nanosecond)
 		correction := correctedStart.Sub(packet.Packet.StartTimestamp.AsTime())
 
 		k := path.Join(event.Scope...) + "." + event.Name
