@@ -71,7 +71,7 @@ func main() {
 				}
 				fh, err := os.Open(fpath)
 				if err != nil {
-					return err
+					return nil
 				}
 				defer fh.Close()
 				r := protostream.NewReader(resumablecompressed.NewReader(fh))
@@ -82,7 +82,7 @@ func main() {
 						if errors.Is(err, io.EOF) {
 							break
 						}
-						return err
+						return nil
 					}
 					row := recordToRow(name, scope, &record)
 					for key := range row {
