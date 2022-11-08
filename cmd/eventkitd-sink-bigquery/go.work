@@ -1,4 +1,7 @@
 go 1.18
 
-use ../..
-use .
+use (
+	../..
+	.
+	../../eventkitd
+)
