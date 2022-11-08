@@ -1,19 +1,15 @@
 package main
 
 import (
+	"context"
 	"flag"
-	"fmt"
+	"github.com/jtolio/eventkit/eventkitd/private/listener"
 	"net"
 	"runtime"
 	"time"
 
-	"github.com/google/gopacket"
-	"github.com/google/gopacket/layers"
-	"golang.org/x/sync/errgroup"
-
 	"github.com/jtolio/eventkit/eventkitd/private/path"
 	"github.com/jtolio/eventkit/pb"
-	"github.com/jtolio/eventkit/transport"
 )
 
 var (
@@ -52,26 +48,8 @@ func eventToRecord(packet *pb.Packet, event *pb.Event, source *net.UDPAddr, rece
 	return &record, path.Compute(*flagPath, eventTime, event.Scope, event.Name)
 }
 
-func handleParsedPacket(writer *Writer, packet *pb.Packet, source *net.UDPAddr, received time.Time) error {
-	for _, event := range packet.Events {
-		record, path := eventToRecord(packet, event, source, received)
-		err := writer.Append(path, record)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-type Packet struct {
-	Payload    []byte
-	Source     *net.UDPAddr
-	ReceivedAt time.Time
-}
-
 func main() {
 	flag.Parse()
-	queue := make(chan *Packet, *flagWorkers*2)
 	writer := NewWriter()
 
 	go func() {
@@ -81,83 +59,14 @@ func main() {
 		}
 	}()
 
-	var eg errgroup.Group
-	for i := 0; i < *flagWorkers; i++ {
-		eg.Go(func() error {
-			for unparsed := range queue {
-				packet, err := transport.ParsePacket(unparsed.Payload)
-				if err != nil {
-					fmt.Println(err)
-					continue
-				}
-				err = handleParsedPacket(writer, packet, unparsed.Source, unparsed.ReceivedAt)
-				if err != nil {
-					fmt.Println(err)
-				}
-			}
-			return nil
-		})
-	}
-
-	if *flagPCAPIface != "" {
-		handle, supported, err := NewEthernetHandle(*flagPCAPIface)
-		if err != nil {
-			panic(err)
-		}
-		if supported {
-			addr, err := net.ResolveUDPAddr("udp", *flagAddr)
+	listener.ProcessPackages(*flagWorkers, *flagPCAPIface, *flagAddr, func(ctx context.Context, unparsed *listener.Packet, packet *pb.Packet) error {
+		for _, event := range packet.Events {
+			record, eventPath := eventToRecord(packet, event, unparsed.Source, unparsed.ReceivedAt)
+			err := writer.Append(eventPath, record)
 			if err != nil {
-				panic(err)
-			}
-
-			src := gopacket.NewPacketSource(handle, layers.LinkTypeEthernet)
-			for {
-				packet, err := src.NextPacket()
-				if err != nil {
-					close(queue)
-					_ = eg.Wait()
-					panic(err)
-				}
-				udp, _ := packet.Layer(layers.LayerTypeUDP).(*layers.UDP)
-				if udp == nil || int(udp.DstPort) != addr.Port {
-					continue
-				}
-
-				source := net.UDPAddr{Port: addr.Port}
-
-				if ip4, _ := packet.Layer(layers.LayerTypeIPv4).(*layers.IPv4); ip4 != nil {
-					source.IP = ip4.SrcIP
-				} else if ip6, _ := packet.Layer(layers.LayerTypeIPv6).(*layers.IPv6); ip6 != nil {
-					source.IP = ip6.SrcIP
-				} else {
-					continue
-				}
-
-				queue <- &Packet{
-					Payload:    udp.Payload,
-					Source:     &source,
-					ReceivedAt: time.Now(),
-				}
+				return err
 			}
 		}
-	}
-
-	listener, err := transport.ListenUDP(*flagAddr)
-	if err != nil {
-		panic(err)
-	}
-	for {
-		payload, source, err := listener.Next()
-		if err != nil {
-			close(queue)
-			_ = eg.Wait()
-			panic(err)
-		}
-
-		queue <- &Packet{
-			Payload:    payload,
-			Source:     source,
-			ReceivedAt: time.Now(),
-		}
-	}
+		return nil
+	})
 }

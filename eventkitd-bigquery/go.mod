@@ -1,8 +1,6 @@
-module github.com/jtolio/eventkit/cmd/eventkitd-sink-bigquery
+module github.com/jtolio/eventkit/eventkitd-bigquery
 
 go 1.18
-
-replace github.com/jtolio/eventkit => ../../
 
 require (
 	cloud.google.com/go/bigquery v1.42.0

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/jtolio/eventkit/eventkitd/private/listener"
 	"google.golang.org/api/googleapi"
 	"net"
 	"os"
@@ -16,9 +17,7 @@ import (
 
 	"cloud.google.com/go/bigquery"
 	"github.com/jtolio/eventkit/pb"
-	"github.com/jtolio/eventkit/transport"
 	"go.uber.org/zap"
-	"golang.org/x/sync/errgroup"
 )
 
 type Application struct {
@@ -85,26 +84,26 @@ type BigQuerySink struct {
 }
 
 // Receive is called when the server receive an event to process.
-func (b *BigQuerySink) Receive(ctx context.Context, packet *Packet) error {
+func (b *BigQuerySink) Receive(ctx context.Context, unparsed *listener.Packet, packet pb.Packet) error {
 	records := make(map[string][]*Record)
-	correctedStart := packet.ReceivedAt.Add(time.Duration(-packet.Packet.SendOffsetNs) * time.Nanosecond)
+	correctedStart := unparsed.ReceivedAt.Add(time.Duration(-packet.SendOffsetNs) * time.Nanosecond)
 
-	for _, event := range packet.Packet.Events {
+	for _, event := range packet.Events {
 		eventTime := correctedStart.Add(time.Duration(event.TimestampOffsetNs) * time.Nanosecond)
-		correction := correctedStart.Sub(packet.Packet.StartTimestamp.AsTime())
+		correction := correctedStart.Sub(packet.StartTimestamp.AsTime())
 
 		k := tableName(event)
 
 		records[k] = append(records[k], &Record{
 			Application: Application{
-				Name:    packet.Packet.Application,
-				Version: packet.Packet.ApplicationVersion,
+				Name:    packet.Application,
+				Version: packet.ApplicationVersion,
 			},
 			Source: Source{
-				Instance: packet.Packet.Instance,
-				Address:  packet.Source,
+				Instance: packet.Instance,
+				Address:  unparsed.Source,
 			},
-			ReceivedAt: packet.ReceivedAt,
+			ReceivedAt: unparsed.ReceivedAt,
 			Timestamp:  eventTime,
 			Correction: correction,
 			Tags:       event.Tags,
@@ -153,6 +152,13 @@ func tableName(event *pb.Event) string {
 	all := multiUnderscore.ReplaceAllString(name, "_")
 	all = strings.Trim(all, "_")
 	return all
+}
+
+func tagFieldName(key string) string {
+	field := "tag_" + key
+	field = strings.ReplaceAll(field, "/", "_")
+	field = strings.ReplaceAll(field, "-", "_")
+	return field
 }
 
 func isTagMissing(schema bigquery.Schema, tags []*pb.Tag) bool {
@@ -268,18 +274,12 @@ tagloop:
 	return nil
 }
 
-func tagFieldName(key string) string {
-	field := "tag_" + key
-	field = strings.ReplaceAll(field, "/", "_")
-	field = strings.ReplaceAll(field, "-", "_")
-	return field
-}
-
 var _ bigquery.ValueSaver = &Record{}
 
 type Config struct {
-	Address *string
-	Workers *int
+	Address       *string
+	PCAPInterface *string
+	Workers       *int
 
 	Google struct {
 		ProjectID *string
@@ -290,17 +290,12 @@ type Config struct {
 	}
 }
 
-type Packet struct {
-	Packet     *pb.Packet
-	Source     *net.UDPAddr
-	ReceivedAt time.Time
-}
-
 func main() {
 	log, _ := zap.NewProduction()
 
 	cfg := Config{}
-	cfg.Address = flag.String("bind-address", ":9002", "udp address to listen on")
+	cfg.Address = flag.String("addr", ":9002", "udp address to listen on")
+	cfg.PCAPInterface = flag.String("pcap-iface", "", "if set, use pcap for udp packets on this interface. must be on linux")
 	cfg.Workers = flag.Int("workers", runtime.NumCPU(), "number of workers")
 	cfg.Google.ProjectID = flag.String("google-project-id", os.Getenv("GOOGLE_PROJECT_ID"), "configure which google project is being used (env: GOOGLE_PROJECT_ID)")
 	cfg.Google.BigQuery.Dataset = flag.String("google-bigquery-dataset", os.Getenv("GOOGLE_BIGQUERY_DATASET"), "configure which dataset is being used (env: GOOGLE_BIGQUERY_DATASET)")
@@ -316,63 +311,13 @@ func main() {
 		return
 	}
 
-	log.Info("starting server", zap.Stringp("address", cfg.Address))
-	listener, err := transport.ListenUDP(*cfg.Address)
-	if err != nil {
-		log.Error("failed to bind to udp address")
-		os.Exit(1)
-		return
-	}
-
 	sink := &BigQuerySink{
 		dataset:          client.Dataset(*cfg.Google.BigQuery.Dataset),
 		tables:           map[string]bigquery.TableMetadata{},
 		schemeChangeLock: &sync.Mutex{},
 	}
 
-	group, ctx := errgroup.WithContext(ctx)
-	workQueue := make(chan *Packet, *cfg.Workers*2)
-
-	for i := 0; i < *cfg.Workers; i++ {
-		group.Go(func() error {
-			for {
-				select {
-				case <-ctx.Done():
-					return nil
-				case packet := <-workQueue:
-					err = sink.Receive(ctx, packet)
-					if err != nil {
-						log.Error("failed to process packet", zap.Error(err))
-					}
-				}
-			}
-		})
-	}
-
-	noWait := &errgroup.Group{}
-	noWait.Go(func() error {
-		for {
-			packet, source, err := listener.Next()
-			if err != nil {
-				log.Error("failed to read udp packet", zap.Error(err))
-				continue
-			}
-
-			workQueue <- &Packet{
-				Packet:     packet,
-				Source:     source,
-				ReceivedAt: time.Now(),
-			}
-		}
+	listener.ProcessPackages(*cfg.Workers, *cfg.PCAPInterface, *cfg.Address, func(ctx context.Context, unparsed *listener.Packet, packet *pb.Packet) error {
+		return sink.Receive(ctx, unparsed, *packet)
 	})
-
-	<-ctx.Done()
-	log.Info("shutting down")
-
-	err = group.Wait()
-	if err != nil {
-		log.Error("encountered error during shutdown", zap.Error(err))
-		os.Exit(1)
-		return
-	}
 }

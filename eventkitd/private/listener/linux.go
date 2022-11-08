@@ -1,7 +1,7 @@
 //go:build linux
 // +build linux
 
-package main
+package listener
 
 import (
 	"github.com/google/gopacket"
