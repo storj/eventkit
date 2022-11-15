@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/jtolio/eventkit/eventkitd/private/listener"
 	"net"
 	"runtime"
 	"time"
 
+	"github.com/jtolio/eventkit/eventkitd/listener"
 	"github.com/jtolio/eventkit/eventkitd/private/path"
 	"github.com/jtolio/eventkit/pb"
 )
