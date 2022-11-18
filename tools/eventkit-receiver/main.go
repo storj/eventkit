@@ -2,25 +2,31 @@ package main
 
 import (
 	"context"
-	"log"
-	"time"
-
-	tea "github.com/charmbracelet/bubbletea"
-	ui "github.com/elek/bubbles"
-	"github.com/jtolio/eventkit/transport"
+	"fmt"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/jtolio/eventkit/eventkitd/listener"
+	"github.com/jtolio/eventkit/pb"
 	"github.com/spf13/cobra"
-	"github.com/zeebo/errs/v2"
-	"golang.org/x/sync/errgroup"
+	"log"
+	"strings"
+	"time"
+)
+
+var (
+	Green  = lipgloss.Color("#01a252")
+	Yellow = lipgloss.Color("#fded02")
+	Red    = lipgloss.Color("#db2d20")
 )
 
 func main() {
 	c := cobra.Command{
 		Use:   "eventkit-receiver",
-		Short: "Interactive eventkit message receiver command line application",
+		Short: "Simple command line evenkit receiver",
 	}
-	listenAddress := c.Flags().StringP("listen", "l", "localhost:9000", "UDP host:port for receiving messages")
+	listenAddress := c.Flags().StringP("listen", "l", "localhost:9002", "UDP host:port for receiving messages")
+	flagPCAPIface := c.Flags().StringP("pcap-iface", "i", "", "if set, use pcap for udp packets on this interface. must be on linux")
 	c.RunE = func(cmd *cobra.Command, args []string) error {
-		return run(*listenAddress)
+		return run(*listenAddress, *flagPCAPIface)
 	}
 
 	err := c.Execute()
@@ -29,55 +35,22 @@ func main() {
 	}
 }
 
-func run(address string) error {
-
-	app := tea.NewProgram(ui.NewKillable(NewPanel()))
-
-	queue := make(chan *Packet)
-	listener, err := transport.ListenUDP(address)
-	if err != nil {
-		return err
-	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	var eg errgroup.Group
-
-	eg.Go(func() error {
-		for {
-			select {
-			case msg := <-queue:
-				app.Send(msg)
-			case <-ctx.Done():
-				return nil
+func run(address string, iface string) error {
+	listener.ProcessPackages(10, iface, address, func(ctx context.Context, unparsed *listener.Packet, packet *pb.Packet) error {
+		for _, event := range packet.Events {
+			var tags []string
+			for _, v := range event.Tags {
+				tags = append(tags, fmt.Sprintf("%s=%s", v.Key, lipgloss.NewStyle().Foreground(Yellow).Render(v.ValueString())))
 			}
-
+			fmt.Printf("%s %s %s %s %s %s\n",
+				lipgloss.NewStyle().Foreground(Red).Render(unparsed.ReceivedAt.Format(time.RFC3339)),
+				packet.Application,
+				packet.Instance,
+				event.Scope,
+				lipgloss.NewStyle().Foreground(Green).Render(strings.Join(event.Scope, ".")),
+				strings.Join(tags, " "))
 		}
+		return nil
 	})
-
-	eg.Go(func() error {
-		for {
-			payload, source, err := listener.Next()
-			if err != nil {
-				return errs.Wrap(err)
-			}
-			packet, err := transport.ParsePacket(payload)
-			if err != nil {
-				return errs.Wrap(err)
-			}
-
-			queue <- &Packet{
-				Packet:     packet,
-				Source:     source,
-				ReceivedAt: time.Now(),
-			}
-		}
-	})
-
-	eg.Go(func() error {
-		err = app.Start()
-		_ = listener.Close()
-		cancel()
-		return err
-	})
-	return eg.Wait()
+	return nil
 }
