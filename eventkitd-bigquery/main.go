@@ -3,7 +3,8 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/jtolio/eventkit/eventkitd/private/listener"
+	"fmt"
+	"github.com/jtolio/eventkit/eventkitd/listener"
 	"google.golang.org/api/googleapi"
 	"net"
 	"os"
@@ -53,7 +54,7 @@ func (r *Record) Save() (map[string]bigquery.Value, string, error) {
 	fields["received_at"] = r.ReceivedAt
 	fields["timestamp"] = r.Timestamp
 	fields["correction"] = r.Correction
-
+	
 	for _, tag := range r.Tags {
 		field := tagFieldName(tag.Key)
 
@@ -280,6 +281,8 @@ type Config struct {
 	Address       *string
 	PCAPInterface *string
 	Workers       *int
+	Verbose       *bool
+	Filter        *string
 
 	Google struct {
 		ProjectID *string
@@ -299,6 +302,9 @@ func main() {
 	cfg.Workers = flag.Int("workers", runtime.NumCPU(), "number of workers")
 	cfg.Google.ProjectID = flag.String("google-project-id", os.Getenv("GOOGLE_PROJECT_ID"), "configure which google project is being used (env: GOOGLE_PROJECT_ID)")
 	cfg.Google.BigQuery.Dataset = flag.String("google-bigquery-dataset", os.Getenv("GOOGLE_BIGQUERY_DATASET"), "configure which dataset is being used (env: GOOGLE_BIGQUERY_DATASET)")
+	cfg.Verbose = flag.Bool("verbose", false, "Print all received message to the console")
+	cfg.Filter = flag.String("filter", "", "Application name to filter message. Default: forward all incoming messages.")
+
 	flag.Parse()
 
 	ctx, done := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -318,6 +324,20 @@ func main() {
 	}
 
 	listener.ProcessPackages(*cfg.Workers, *cfg.PCAPInterface, *cfg.Address, func(ctx context.Context, unparsed *listener.Packet, packet *pb.Packet) error {
+		if *cfg.Filter != "" && *cfg.Filter != packet.Application {
+			return nil
+		}
+		if *cfg.Verbose {
+			for _, event := range packet.Events {
+				fmt.Printf("%s %s %s %s %s %s\n",
+					unparsed.ReceivedAt.Format(time.RFC3339),
+					packet.Application,
+					packet.Instance,
+					event.Scope,
+					strings.Join(event.Scope, "."),
+					event.TagsString())
+			}
+		}
 		return sink.Receive(ctx, unparsed, *packet)
 	})
 }
