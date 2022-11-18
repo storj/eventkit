@@ -54,7 +54,6 @@ func (r *Record) Save() (map[string]bigquery.Value, string, error) {
 	fields["received_at"] = r.ReceivedAt
 	fields["timestamp"] = r.Timestamp
 	fields["correction"] = r.Correction
-	
 	for _, tag := range r.Tags {
 		field := tagFieldName(tag.Key)
 

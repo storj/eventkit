@@ -56,7 +56,7 @@ func send(dest string, name string, args []string, customTags []string) error {
 	if err != nil {
 		return err
 	}
-	t := time.Now().Sub(start)
+	t := time.Since(start)
 
 	var tags []eventkit.Tag
 	tags = append(tags, eventkit.String("cmd", args[0]))
