@@ -47,6 +47,30 @@ func ProcessPackages(workers int, PCAPIface string, address string, handler Hand
 			}
 		})
 	}
+	eg.Go(func() error {
+		sigusr := make(chan os.Signal)
+		signal.Notify(sigusr, syscall.SIGUSR1)
+		defer done()
+
+		for {
+			select {
+			// sigterm
+			case <-ctx.Done():
+				return nil
+			case <-sigusr:
+				buf := make([]byte, 10240)
+				for {
+					n := runtime.Stack(buf, true)
+					if n < len(buf) {
+						fmt.Println(string(buf))
+						break
+					}
+					buf = make([]byte, 2*len(buf))
+				}
+			}
+
+		}
+	})
 
 	if PCAPIface != "" {
 		handle, supported, err := NewEthernetHandle(PCAPIface)
