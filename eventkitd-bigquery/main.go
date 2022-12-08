@@ -83,6 +83,7 @@ type BigQuerySink struct {
 	dataset          *bigquery.Dataset
 	tables           map[string]bigquery.TableMetadata
 	schemeChangeLock sync.Locker
+	counter          counter
 }
 
 // Receive is called when the server receive an event to process.
@@ -135,6 +136,7 @@ func (b *BigQuerySink) Receive(ctx context.Context, unparsed *listener.Packet, p
 		if err != nil {
 			return err
 		}
+		b.counter.Increment(len(events))
 	}
 
 	return nil
@@ -183,6 +185,8 @@ func (b *BigQuerySink) createOrLoadTableScheme(ctx context.Context, table string
 	if found {
 		return tableMetadata, nil
 	}
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
 	meta, err := b.dataset.Table(table).Metadata(ctx)
 	switch e := err.(type) {
 	case *googleapi.Error:
@@ -229,6 +233,9 @@ func (b *BigQuerySink) createOrLoadTableScheme(ctx context.Context, table string
 			}
 
 		}
+	}
+	if err != nil {
+		return bigquery.TableMetadata{}, err
 	}
 	b.tables[table] = *meta
 	return *meta, err
@@ -324,8 +331,10 @@ func main() {
 		dataset:          client.Dataset(*cfg.Google.BigQuery.Dataset),
 		tables:           map[string]bigquery.TableMetadata{},
 		schemeChangeLock: &sync.Mutex{},
+		counter:          newCounter("%d messages are sent to BigQuery\n"),
 	}
 
+	c := newCounter("%d events are received so far\n")
 	listener.ProcessPackages(*cfg.Workers, *cfg.PCAPInterface, *cfg.Address, func(ctx context.Context, unparsed *listener.Packet, packet *pb.Packet) error {
 		if *cfg.Filter != "" && *cfg.Filter != packet.Application {
 			return nil
@@ -341,6 +350,32 @@ func main() {
 					event.TagsString())
 			}
 		}
+		c.Increment(len(packet.Events))
 		return sink.Receive(ctx, unparsed, *packet)
 	})
+}
+
+type counter struct {
+	mu         sync.Mutex
+	counter    int
+	lastReport time.Time
+	message    string
+}
+
+func newCounter(message string) counter {
+	return counter{
+		lastReport: time.Now(),
+		message:    message,
+	}
+}
+
+func (c *counter) Increment(s int) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.counter += s
+	if time.Since(c.lastReport).Milliseconds() > int64(5000) {
+		fmt.Printf(c.message, c.counter)
+		c.lastReport = time.Now()
+	}
+
 }
