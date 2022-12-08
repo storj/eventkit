@@ -70,6 +70,8 @@ func (r *Record) Save() (map[string]bigquery.Value, string, error) {
 			fields[field] = v.Int64
 		case *pb.Tag_String_:
 			fields[field] = v.String_
+		case *pb.Tag_Timestamp:
+			fields[field] = time.Unix(v.Timestamp.Seconds, int64(v.Timestamp.Nanos))
 		}
 	}
 
@@ -261,6 +263,8 @@ tagloop:
 			f.Type = bigquery.IntegerFieldType
 		case *pb.Tag_String_:
 			f.Type = bigquery.StringFieldType
+		case *pb.Tag_Timestamp:
+			f.Type = bigquery.TimestampFieldType
 		}
 		schema = append(schema, f)
 	}
