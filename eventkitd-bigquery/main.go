@@ -192,7 +192,18 @@ func (b *BigQuerySink) createOrLoadTableScheme(ctx context.Context, table string
 	case *googleapi.Error:
 		if e.Code == 404 {
 			err = b.dataset.Table(table).Create(ctx, &bigquery.TableMetadata{
-				Name: table,
+				Name:                   table,
+				RequirePartitionFilter: true,
+				TimePartitioning: &bigquery.TimePartitioning{
+					Type:  bigquery.DayPartitioningType,
+					Field: "received_at",
+				},
+				Clustering: &bigquery.Clustering{
+					Fields: []string{
+						"application_name",
+						"source_instance",
+					},
+				},
 				Schema: bigquery.Schema{
 					{
 						Name: "application_name",
