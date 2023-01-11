@@ -14,8 +14,6 @@ import (
 	"time"
 )
 
-var ek = eventkit.Package()
-
 func main() {
 	c := cobra.Command{
 		Use:   "eventkit-time [--tag=value] command args",
@@ -25,8 +23,9 @@ func main() {
 	name := c.Flags().StringP("name", "n", "test", "Name of the event sending out")
 	dest := c.Flags().StringP("destination", "d", "localhost:9000", "UDP host and port to send out package")
 	tags := c.Flags().StringSliceP("tag", "t", []string{}, "Custom tags to add to the events")
+	scope := c.Flags().StringP("scope", "s", "eventkit-time", "Scope to use for events")
 	c.RunE = func(cmd *cobra.Command, args []string) error {
-		return execute(*dest, *name, args, *tags)
+		return execute(*dest, *name, args, *tags, *scope)
 	}
 	err := c.Execute()
 	if err != nil {
@@ -34,14 +33,18 @@ func main() {
 	}
 }
 
-func execute(dest string, name string, args []string, customTags []string) error {
+func execute(dest string, name string, args []string, customTags []string, scope string) error {
+	ek := eventkit.DefaultRegistry.Scope(scope)
+
 	hostname, _ := os.Hostname()
 	if hostname == "" {
 		hostname = funcName()
 	}
 	time.Sleep(10 * time.Second)
+
 	client := eventkit.NewUDPClient("eventkit-time", "0.0.1", hostname, dest)
 	eventkit.DefaultRegistry.AddDestination(client)
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	w := errgroup.Group{}
