@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/jtolio/eventkit"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/zeebo/errs/v2"
 	"golang.org/x/sync/errgroup"
 	"log"
@@ -20,15 +21,27 @@ func main() {
 		Short: "CLI tool for performance tests, like `time` but results are sent to an eventkit target",
 		Args:  cobra.MinimumNArgs(1),
 	}
-	name := c.Flags().StringP("name", "n", "test", "Name of the event sending out")
-	dest := c.Flags().StringP("destination", "d", "localhost:9000", "UDP host and port to send out package")
+	_ = c.Flags().StringP("name", "n", "test", "Name of the event sending out")
+	_ = c.Flags().StringP("destination", "d", "localhost:9000", "UDP host and port to send out package")
 	tags := c.Flags().StringSliceP("tag", "t", []string{}, "Custom tags to add to the events")
-	instance := c.Flags().StringP("instance", "i", "", "Instance name of the eventkitd monitoring (default: hostname)")
-	scope := c.Flags().StringP("scope", "s", "eventkit-time", "Scope to use for events")
-	c.RunE = func(cmd *cobra.Command, args []string) error {
-		return execute(*dest, *name, args, *tags, *scope, *instance)
+	_ = c.Flags().StringP("instance", "i", "", "Instance name of the eventkitd monitoring (default: hostname)")
+	_ = c.Flags().StringP("scope", "s", "eventkit-time", "Scope to use for events")
+	viper.SetConfigName("eventkit-time")
+	viper.SetEnvPrefix("EVENTKIT")
+	viper.AutomaticEnv()
+	err := viper.BindPFlags(c.Flags())
+	if err != nil {
+		panic(err)
 	}
-	err := c.Execute()
+	c.RunE = func(cmd *cobra.Command, args []string) error {
+		if err := viper.ReadInConfig(); err != nil {
+			if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+				return err
+			}
+		}
+		return execute(viper.GetString("destination"), viper.GetString("name"), args, *tags, viper.GetString("scope"), viper.GetString("scope"))
+	}
+	err = c.Execute()
 	if err != nil {
 		log.Fatalf("%++v", err)
 	}
@@ -36,7 +49,6 @@ func main() {
 
 func execute(dest string, name string, args []string, customTags []string, scope string, instance string) error {
 	ek := eventkit.DefaultRegistry.Scope(scope)
-
 	if instance == "" {
 		instance, _ = os.Hostname()
 		if instance == "" {
