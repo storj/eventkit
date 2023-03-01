@@ -39,7 +39,7 @@ func main() {
 				return err
 			}
 		}
-		return execute(viper.GetString("destination"), viper.GetString("name"), args, *tags, viper.GetString("scope"), viper.GetString("scope"))
+		return execute(viper.GetString("destination"), viper.GetString("name"), args, *tags, viper.GetString("scope"), viper.GetString("instance"))
 	}
 	err = c.Execute()
 	if err != nil {
