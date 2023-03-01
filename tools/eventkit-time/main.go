@@ -23,9 +23,10 @@ func main() {
 	name := c.Flags().StringP("name", "n", "test", "Name of the event sending out")
 	dest := c.Flags().StringP("destination", "d", "localhost:9000", "UDP host and port to send out package")
 	tags := c.Flags().StringSliceP("tag", "t", []string{}, "Custom tags to add to the events")
+	instance := c.Flags().StringP("instance", "i", "", "Instance name of the eventkitd monitoring (default: hostname)")
 	scope := c.Flags().StringP("scope", "s", "eventkit-time", "Scope to use for events")
 	c.RunE = func(cmd *cobra.Command, args []string) error {
-		return execute(*dest, *name, args, *tags, *scope)
+		return execute(*dest, *name, args, *tags, *scope, *instance)
 	}
 	err := c.Execute()
 	if err != nil {
@@ -33,16 +34,17 @@ func main() {
 	}
 }
 
-func execute(dest string, name string, args []string, customTags []string, scope string) error {
+func execute(dest string, name string, args []string, customTags []string, scope string, instance string) error {
 	ek := eventkit.DefaultRegistry.Scope(scope)
 
-	hostname, _ := os.Hostname()
-	if hostname == "" {
-		hostname = funcName()
+	if instance == "" {
+		instance, _ = os.Hostname()
+		if instance == "" {
+			instance = "unknown"
+		}
 	}
-	time.Sleep(10 * time.Second)
 
-	client := eventkit.NewUDPClient("eventkit-time", "0.0.1", hostname, dest)
+	client := eventkit.NewUDPClient("eventkit-time", "0.0.1", instance, dest)
 	eventkit.DefaultRegistry.AddDestination(client)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -82,8 +84,4 @@ func execute(dest string, name string, args []string, customTags []string, scope
 	ek.Event(name, tags...)
 	cancel()
 	return w.Wait()
-}
-
-func funcName() string {
-	return "unknown"
 }
