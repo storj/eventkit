@@ -23,7 +23,7 @@ func main() {
 	}
 	_ = c.Flags().StringP("name", "n", "test", "Name of the event sending out")
 	_ = c.Flags().StringP("destination", "d", "localhost:9000", "UDP host and port to send out package")
-	tags := c.Flags().StringSliceP("tag", "t", []string{}, "Custom tags to add to the events")
+	_ = c.Flags().StringSliceP("tag", "t", []string{}, "Custom tags to add to the events")
 	_ = c.Flags().StringP("instance", "i", "", "Instance name of the eventkitd monitoring (default: hostname)")
 	_ = c.Flags().StringP("scope", "s", "eventkit-time", "Scope to use for events")
 	viper.SetConfigName("eventkit-time")
@@ -39,7 +39,8 @@ func main() {
 				return err
 			}
 		}
-		return execute(viper.GetString("destination"), viper.GetString("name"), args, *tags, viper.GetString("scope"), viper.GetString("instance"))
+
+		return execute(viper.GetString("destination"), viper.GetString("name"), args, viper.GetStringSlice("tags"), viper.GetString("scope"), viper.GetString("instance"))
 	}
 	err = c.Execute()
 	if err != nil {
@@ -90,8 +91,16 @@ func execute(dest string, name string, args []string, customTags []string, scope
 	tags = append(tags, eventkit.Int64("system-time-ms", usage.Stime.Nano()/1000000))
 	tags = append(tags, eventkit.Int64("max-rss", usage.Maxrss))
 	for _, c := range customTags {
-		parts := strings.Split(c, "=")
+		parts := strings.SplitN(c, "=", 2)
 		tags = append(tags, eventkit.String(parts[0], parts[1]))
+	}
+	for _, e := range os.Environ() {
+		parts := strings.SplitN(e, "=", 2)
+		if strings.HasPrefix(parts[0], "EVENTKIT_TAG_") {
+			tagName := strings.TrimPrefix(parts[0], "EVENTKIT_TAG_")
+			tagName = strings.ToLower(tagName)
+			tags = append(tags, eventkit.String(tagName, parts[1]))
+		}
 	}
 	ek.Event(name, tags...)
 	cancel()
