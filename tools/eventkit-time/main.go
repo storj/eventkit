@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/jtolio/eventkit"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -10,6 +11,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"runtime/debug"
 	"strings"
 	"syscall"
 	"time"
@@ -19,13 +21,13 @@ func main() {
 	c := cobra.Command{
 		Use:   "eventkit-time [--tag=value] command args",
 		Short: "CLI tool for performance tests, like `time` but results are sent to an eventkit target",
-		Args:  cobra.MinimumNArgs(1),
 	}
 	_ = c.Flags().StringP("name", "n", "test", "Name of the event sending out")
 	_ = c.Flags().StringP("destination", "d", "localhost:9000", "UDP host and port to send out package")
 	_ = c.Flags().StringSliceP("tag", "t", []string{}, "Custom tags to add to the events")
 	_ = c.Flags().StringP("instance", "i", "", "Instance name of the eventkitd monitoring (default: hostname)")
 	_ = c.Flags().StringP("scope", "s", "eventkit-time", "Scope to use for events")
+	version := c.Flags().BoolP("version", "v", false, "Scope to use for events")
 	viper.SetConfigName("eventkit-time")
 	viper.SetEnvPrefix("EVENTKIT")
 	viper.AutomaticEnv()
@@ -34,6 +36,19 @@ func main() {
 		panic(err)
 	}
 	c.RunE = func(cmd *cobra.Command, args []string) error {
+		if *version {
+			if bi, ok := debug.ReadBuildInfo(); ok {
+				for _, s := range bi.Settings {
+					if strings.HasPrefix(s.Key, "vcs.") {
+						fmt.Printf("%+v\n", s.Key+"="+s.Value)
+					}
+				}
+			}
+			return nil
+		}
+		if len(args) == 0 {
+			return errs.Errorf("Command is missing")
+		}
 		if err := viper.ReadInConfig(); err != nil {
 			if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
 				return err
