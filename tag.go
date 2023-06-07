@@ -11,7 +11,7 @@ type Tag = *pb.Tag
 func String(key string, val string) Tag {
 	return &pb.Tag{
 		Key:   key,
-		Value: &pb.Tag_String_{String_: val},
+		Value: &pb.Tag_String_{String_: []byte(val)},
 	}
 }
 
