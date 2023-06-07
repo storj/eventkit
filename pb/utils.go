@@ -27,7 +27,7 @@ func (tag *Tag) ValueString() string {
 	default:
 		panic("unknown tag type")
 	case *Tag_String_:
-		return t.String_
+		return string(t.String_)
 	case *Tag_Int64:
 		return fmt.Sprint(t.Int64)
 	case *Tag_Double:
