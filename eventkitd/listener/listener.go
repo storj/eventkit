@@ -3,18 +3,19 @@ package listener
 import (
 	"context"
 	"fmt"
-	"github.com/google/gopacket"
-	"github.com/google/gopacket/layers"
-	"github.com/jtolio/eventkit/pb"
-	"github.com/jtolio/eventkit/transport"
-	"go.uber.org/zap"
-	"golang.org/x/sync/errgroup"
 	"net"
 	"os"
 	"os/signal"
 	"runtime"
 	"syscall"
 	"time"
+
+	"github.com/google/gopacket"
+	"github.com/google/gopacket/layers"
+	"github.com/jtolio/eventkit/pb"
+	"github.com/jtolio/eventkit/transport"
+	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 )
 
 type Handler func(ctx context.Context, unparsed *Packet, packet *pb.Packet) error
@@ -49,7 +50,7 @@ func ProcessPackages(workers int, PCAPIface string, address string, handler Hand
 		})
 	}
 	eg.Go(func() error {
-		sigusr := make(chan os.Signal)
+		sigusr := make(chan os.Signal, 1)
 		signal.Notify(sigusr, syscall.SIGUSR1)
 		defer done()
 
