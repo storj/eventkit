@@ -35,6 +35,7 @@ func NewBigQueryDestination(ctx context.Context, appName string, project string,
 	}
 	return res, nil
 }
+
 func (b *BigQueryDestination) Submit(event *eventkit.Event) {
 	var tags []*pb.Tag
 	for _, t := range event.Tags {
@@ -62,6 +63,6 @@ func (b *BigQueryDestination) Submit(event *eventkit.Event) {
 	}
 	err := b.client.SaveRecord(context.Background(), records)
 	if err != nil {
-		fmt.Println("WARN: Couldn't save evenkit record to BQ: ", err)
+		fmt.Println("WARN: Couldn't save eventkit record to BQ: ", err)
 	}
 }
