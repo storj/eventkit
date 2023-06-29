@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/jtolio/eventkit/pb"
 	"net"
 	"strings"
 	"time"
+
+	"github.com/jtolio/eventkit/pb"
 )
 
 type Packet struct {

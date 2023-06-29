@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	tea "github.com/charmbracelet/bubbletea"
-	ui "github.com/elek/bubbles"
 	"sort"
 	"strings"
+
+	tea "github.com/charmbracelet/bubbletea"
+	ui "github.com/elek/bubbles"
 )
 
 func NewTop(repo *Repo) tea.Model {

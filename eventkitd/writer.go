@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"github.com/gogo/protobuf/proto"
-
 	"github.com/jtolio/eventkit/eventkitd/private/protostream"
 	"github.com/jtolio/eventkit/eventkitd/private/resumablecompressed"
 )
