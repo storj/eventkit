@@ -3,11 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/jtolio/eventkit"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"github.com/zeebo/errs/v2"
-	"golang.org/x/sync/errgroup"
 	"log"
 	"os"
 	"os/exec"
@@ -15,6 +10,12 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/jtolio/eventkit"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"github.com/zeebo/errs/v2"
+	"golang.org/x/sync/errgroup"
 )
 
 func main() {

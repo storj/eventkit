@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	ui "github.com/elek/bubbles"
 	"strings"
+
+	ui "github.com/elek/bubbles"
 )
 
 type RawLog struct {

@@ -8,7 +8,6 @@ import (
 	"net"
 
 	"github.com/gogo/protobuf/proto"
-
 	"github.com/jtolio/eventkit/pb"
 )
 

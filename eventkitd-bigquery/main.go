@@ -4,8 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/jtolio/eventkit/eventkitd/listener"
-	"google.golang.org/api/googleapi"
 	"net"
 	"os"
 	"os/signal"
@@ -17,8 +15,10 @@ import (
 	"time"
 
 	"cloud.google.com/go/bigquery"
+	"github.com/jtolio/eventkit/eventkitd/listener"
 	"github.com/jtolio/eventkit/pb"
 	"go.uber.org/zap"
+	"google.golang.org/api/googleapi"
 )
 
 type Application struct {

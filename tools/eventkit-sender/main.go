@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
+	"log"
+	"strings"
+
 	"github.com/jtolio/eventkit"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
-	"log"
-	"strings"
 )
 
 var ek = eventkit.Package()
