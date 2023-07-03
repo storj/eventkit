@@ -2,13 +2,14 @@ package main
 
 import (
 	"context"
-	"github.com/jtolio/eventkit"
-	"github.com/spf13/cobra"
-	"golang.org/x/sync/errgroup"
 	"log"
 	"math/rand"
 	"strconv"
 	"time"
+
+	"github.com/jtolio/eventkit"
+	"github.com/spf13/cobra"
+	"golang.org/x/sync/errgroup"
 )
 
 func main() {

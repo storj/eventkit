@@ -2,9 +2,10 @@ package bigquery
 
 import (
 	"context"
+	"time"
+
 	"github.com/jtolio/eventkit/eventkitd/listener"
 	"github.com/jtolio/eventkit/pb"
-	"time"
 )
 
 // BigQuerySink provides an abstraction for processing events in a transport agnostic way.

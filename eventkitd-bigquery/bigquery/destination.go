@@ -3,10 +3,11 @@ package bigquery
 import (
 	"context"
 	"fmt"
-	"github.com/jtolio/eventkit"
-	"github.com/jtolio/eventkit/pb"
 	"os"
 	"time"
+
+	"github.com/jtolio/eventkit"
+	"github.com/jtolio/eventkit/pb"
 )
 
 // BigQueryDestination can be used to save each evenkit package directly to server.

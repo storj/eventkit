@@ -9,10 +9,9 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/proto"
-	"golang.org/x/sync/errgroup"
-
 	"github.com/jtolio/eventkit/pb"
 	"github.com/jtolio/eventkit/utils"
+	"golang.org/x/sync/errgroup"
 )
 
 const (

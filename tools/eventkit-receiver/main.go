@@ -3,13 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
+	"strings"
+	"time"
+
 	"github.com/charmbracelet/lipgloss"
 	"github.com/jtolio/eventkit/eventkitd/listener"
 	"github.com/jtolio/eventkit/pb"
 	"github.com/spf13/cobra"
-	"log"
-	"strings"
-	"time"
 )
 
 var (

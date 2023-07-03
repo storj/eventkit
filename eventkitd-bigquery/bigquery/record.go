@@ -1,9 +1,10 @@
 package bigquery
 
 import (
+	"time"
+
 	"cloud.google.com/go/bigquery"
 	"github.com/jtolio/eventkit/pb"
-	"time"
 )
 
 var _ bigquery.ValueSaver = &Record{}

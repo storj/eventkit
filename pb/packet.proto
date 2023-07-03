@@ -11,7 +11,7 @@ message Timestamp {
 message Tag {
     string key = 1;
     oneof value {
-        string string = 2;
+        bytes string = 2;
         int64 int64 = 3;
         double double = 4;
         bytes bytes = 5;

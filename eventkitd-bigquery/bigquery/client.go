@@ -1,15 +1,16 @@
 package bigquery
 
 import (
-	"cloud.google.com/go/bigquery"
 	"context"
-	"github.com/jtolio/eventkit/pb"
-	"github.com/pkg/errors"
-	"google.golang.org/api/googleapi"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
+
+	"cloud.google.com/go/bigquery"
+	"github.com/jtolio/eventkit/pb"
+	"github.com/pkg/errors"
+	"google.golang.org/api/googleapi"
 )
 
 var nonSafeTableNameCharacters = regexp.MustCompile(`[^a-zA-Z0-9]+`)

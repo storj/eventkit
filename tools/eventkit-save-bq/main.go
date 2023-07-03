@@ -2,12 +2,13 @@ package main
 
 import (
 	"context"
+	"log"
+	"strings"
+
 	"github.com/jtolio/eventkit"
 	"github.com/jtolio/eventkit/eventkitd-bigquery/bigquery"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"log"
-	"strings"
 )
 
 var ek = eventkit.Package()

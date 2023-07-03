@@ -26,7 +26,7 @@ func tagValueToString(tag *pb.Tag) string {
 	default:
 		panic("unknown tag type")
 	case *pb.Tag_String_:
-		return t.String_
+		return string(t.String_)
 	case *pb.Tag_Int64:
 		return fmt.Sprint(t.Int64)
 	case *pb.Tag_Double:
