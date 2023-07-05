@@ -7,15 +7,16 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"regexp"
 	"runtime"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
 	"cloud.google.com/go/bigquery"
+	bq "github.com/jtolio/eventkit/eventkitd-bigquery/bigquery"
 	"github.com/jtolio/eventkit/eventkitd/listener"
+	"github.com/jtolio/eventkit/eventkitd/listener"
+	"github.com/jtolio/eventkit/pb"
 	"github.com/jtolio/eventkit/pb"
 	"go.uber.org/zap"
 	"google.golang.org/api/googleapi"
@@ -298,6 +299,7 @@ tagloop:
 
 var _ bigquery.ValueSaver = &Record{}
 
+>>>>>>> origin/main
 type Config struct {
 	Address       *string
 	PCAPInterface *string
@@ -315,8 +317,6 @@ type Config struct {
 }
 
 func main() {
-	log, _ := zap.NewProduction()
-
 	cfg := Config{}
 	cfg.Address = flag.String("addr", ":9002", "udp address to listen on")
 	cfg.PCAPInterface = flag.String("pcap-iface", "", "if set, use pcap for udp packets on this interface. must be on linux")
@@ -331,21 +331,13 @@ func main() {
 	ctx, done := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer done()
 
-	client, err := bigquery.NewClient(ctx, *cfg.Google.ProjectID)
+	cb := bq.NewCounter("%d messages are sent to BigQuery\n")
+	sink, err := bq.NewBigQuerySink(ctx, *cfg.Google.ProjectID, *cfg.Google.BigQuery.Dataset, cb.Increment)
 	if err != nil {
-		log.Error("bigquery client connection failed", zap.Error(err))
-		os.Exit(1)
-		return
+		panic(err)
 	}
 
-	sink := &BigQuerySink{
-		dataset:          client.Dataset(*cfg.Google.BigQuery.Dataset),
-		tables:           map[string]bigquery.TableMetadata{},
-		schemeChangeLock: &sync.Mutex{},
-		counter:          newCounter("%d messages are sent to BigQuery\n"),
-	}
-
-	c := newCounter("%d events are received so far\n")
+	c := bq.NewCounter("%d events are received so far\n")
 	listener.ProcessPackages(*cfg.Workers, *cfg.PCAPInterface, *cfg.Address, func(ctx context.Context, unparsed *listener.Packet, packet *pb.Packet) error {
 		if *cfg.Filter != "" && *cfg.Filter != packet.Application {
 			return nil
@@ -364,29 +356,4 @@ func main() {
 		c.Increment(len(packet.Events))
 		return sink.Receive(ctx, unparsed, *packet)
 	})
-}
-
-type counter struct {
-	mu         sync.Mutex
-	counter    int
-	lastReport time.Time
-	message    string
-}
-
-func newCounter(message string) counter {
-	return counter{
-		lastReport: time.Now(),
-		message:    message,
-	}
-}
-
-func (c *counter) Increment(s int) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.counter += s
-	if time.Since(c.lastReport).Milliseconds() > int64(5000) {
-		fmt.Printf(c.message, c.counter)
-		c.lastReport = time.Now()
-	}
-
 }

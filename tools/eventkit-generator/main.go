@@ -18,7 +18,7 @@ func main() {
 		Use:   "eventkit-generator",
 		Short: "Simple CLI to generate test eventkit packages for test purposes.",
 	}
-	dest := c.Flags().StringP("destination", "d", "localhost:9000", "UDP host and port to send out package")
+	dest := c.Flags().StringP("destination", "d", "localhost:9002", "UDP host and port to send out package")
 	freq := c.Flags().DurationP("frequency", "f", 100*time.Millisecond, "Frequency of sending 3 events (3 different scope)")
 	c.RunE = func(cmd *cobra.Command, args []string) error {
 		return run(*dest, *freq)
@@ -47,9 +47,9 @@ func run(dest string, freq time.Duration) error {
 	for {
 		testID := strconv.Itoa(rand.Intn(3))
 		keyID := strconv.Itoa(rand.Intn(2))
-		ek.Event("test"+testID, eventkit.String(testID+"/k"+keyID, testID+"/"+keyID+"/value"+strconv.Itoa(rand.Intn(8))))
-		ek1.Event("test"+testID, eventkit.String(testID+"/k"+keyID, testID+"/"+keyID+"/value"+strconv.Itoa(rand.Intn(8))))
-		ek2.Event("test"+testID, eventkit.String(testID+"/k"+keyID, testID+"/"+keyID+"/value"+strconv.Itoa(rand.Intn(8))))
+		ek.Event("test"+testID, eventkit.String("v"+testID+"/k"+keyID, testID+"/"+keyID+"/value"+strconv.Itoa(rand.Intn(8))))
+		ek1.Event("test"+testID, eventkit.String("v"+testID+"/k"+keyID, testID+"/"+keyID+"/value"+strconv.Itoa(rand.Intn(8))))
+		ek2.Event("test"+testID, eventkit.String("v"+testID+"/k"+keyID, testID+"/"+keyID+"/value"+strconv.Itoa(rand.Intn(8))))
 		time.Sleep(freq)
 	}
 }
