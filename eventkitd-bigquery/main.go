@@ -7,18 +7,17 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"regexp"
 	"runtime"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
 	"cloud.google.com/go/bigquery"
 	bq "github.com/jtolio/eventkit/eventkitd-bigquery/bigquery"
 	"github.com/jtolio/eventkit/eventkitd/listener"
-	"github.com/jtolio/eventkit/eventkitd/listener"
 	"github.com/jtolio/eventkit/pb"
-	"github.com/jtolio/eventkit/pb"
-	"go.uber.org/zap"
 	"google.golang.org/api/googleapi"
 )
 
@@ -84,7 +83,7 @@ type BigQuerySink struct {
 	dataset          *bigquery.Dataset
 	tables           map[string]bigquery.TableMetadata
 	schemeChangeLock sync.Locker
-	counter          counter
+	counter          bq.Counter
 }
 
 // Receive is called when the server receive an event to process.
@@ -299,7 +298,6 @@ tagloop:
 
 var _ bigquery.ValueSaver = &Record{}
 
->>>>>>> origin/main
 type Config struct {
 	Address       *string
 	PCAPInterface *string

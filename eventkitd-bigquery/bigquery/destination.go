@@ -12,7 +12,6 @@ import (
 
 // BigQueryDestination can be used to save each evenkit package directly to server.
 type BigQueryDestination struct {
-	name           string
 	client         *BigQueryClient
 	SourceInstance string
 	appName        string
