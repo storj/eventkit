@@ -1,6 +1,7 @@
 package eventkit
 
 import (
+	"context"
 	"time"
 )
 
@@ -13,6 +14,7 @@ type Event struct {
 
 type Destination interface {
 	Submit(*Event)
+	Run(ctx context.Context)
 }
 
 type Registry struct {

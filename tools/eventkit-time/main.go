@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/jtolio/eventkit"
+	"github.com/jtolio/eventkit/eventkitd-bigquery/bigquery"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/zeebo/errs/v2"
@@ -24,7 +25,7 @@ func main() {
 		Short: "CLI tool for performance tests, like `time` but results are sent to an eventkit target",
 	}
 	_ = c.Flags().StringP("name", "n", "test", "Name of the event sending out")
-	_ = c.Flags().StringP("destination", "d", "localhost:9000", "UDP host and port to send out package")
+	_ = c.Flags().StringP("destination", "d", "localhost:9000", "UDP host and port to send out package, or bq:project/dataset to directly send data to BQ")
 	_ = c.Flags().StringSliceP("tag", "t", []string{}, "Custom tags to add to the events")
 	_ = c.Flags().StringP("instance", "i", "", "Instance name of the eventkitd monitoring (default: hostname)")
 	_ = c.Flags().StringP("scope", "s", "eventkit-time", "Scope to use for events")
@@ -73,7 +74,22 @@ func execute(dest string, name string, args []string, customTags []string, scope
 		}
 	}
 
-	client := eventkit.NewUDPClient("eventkit-time", "0.0.1", instance, dest)
+	destCtx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var client eventkit.Destination
+	if strings.HasPrefix(dest, "bq:") {
+		var err error
+		dest = strings.TrimPrefix(dest, "bq:")
+		parts := strings.Split(dest, "/")
+		client, err = bigquery.NewBigQueryDestination(destCtx, "eventkit-time", parts[0], parts[1])
+		if err != nil {
+			return err
+		}
+	} else {
+		client = eventkit.NewUDPClient("eventkit-time", "0.0.1", instance, dest)
+	}
+
 	eventkit.DefaultRegistry.AddDestination(client)
 
 	ctx, cancel := context.WithCancel(context.Background())

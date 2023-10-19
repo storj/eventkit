@@ -66,3 +66,6 @@ func (b *BigQueryDestination) Submit(event *eventkit.Event) {
 		fmt.Println("WARN: Couldn't save eventkit record to BQ: ", err)
 	}
 }
+
+func (b *BigQueryDestination) Run(ctx context.Context) {
+}
