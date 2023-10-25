@@ -1,6 +1,6 @@
 module github.com/jtolio/eventkit/eventkitd-bigquery
 
-go 1.18
+go 1.19
 
 require (
 	cloud.google.com/go/bigquery v1.42.0
@@ -22,6 +22,7 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.1.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.5.1 // indirect
 	github.com/klauspost/compress v1.15.11 // indirect
+	github.com/spacemonkeygo/monkit/v3 v3.0.22 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect

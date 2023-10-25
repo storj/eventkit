@@ -1,5 +1,5 @@
 VERSION 0.6
-FROM golang:1.18
+FROM golang:1.19
 WORKDIR /go/eventkit
 
 lint:
@@ -8,11 +8,14 @@ lint:
         go install honnef.co/go/tools/cmd/staticcheck@2022.1.3
     RUN --mount=type=cache,target=/root/.cache/go-build \
         --mount=type=cache,target=/go/pkg/mod \
-        go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.46.2
+        go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.54.1
     COPY . .
     RUN golangci-lint run
     RUN staticcheck ./...
     WORKDIR /go/eventkit/tools
+    RUN golangci-lint run
+    RUN staticcheck ./...
+    WORKDIR /go/eventkit/eventkitd
     RUN golangci-lint run
     RUN staticcheck ./...
     WORKDIR /go/eventkit/eventkitd-bigquery
@@ -25,6 +28,10 @@ test:
        --mount=type=cache,target=/go/pkg/mod \
        go test ./...
    WORKDIR /go/eventkit/tools
+   RUN --mount=type=cache,target=/root/.cache/go-build \
+        --mount=type=cache,target=/go/pkg/mod \
+        go test ./...
+   WORKDIR /go/eventkit/eventkitd
    RUN --mount=type=cache,target=/root/.cache/go-build \
         --mount=type=cache,target=/go/pkg/mod \
         go test ./...
