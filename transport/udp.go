@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"compress/zlib"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net"
 
 	"github.com/gogo/protobuf/proto"
@@ -65,7 +65,7 @@ func ParsePacket(buf []byte) (*pb.Packet, error) {
 
 	defer func() { _ = zl.Close() }()
 
-	buf, err = ioutil.ReadAll(zl)
+	buf, err = io.ReadAll(zl)
 	if err != nil {
 		return nil, err
 	}

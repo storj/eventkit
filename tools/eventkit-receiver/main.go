@@ -26,8 +26,9 @@ func main() {
 	}
 	listenAddress := c.Flags().StringP("listen", "l", "localhost:9002", "UDP host:port for receiving messages")
 	flagPCAPIface := c.Flags().StringP("pcap-iface", "i", "", "if set, use pcap for udp packets on this interface. must be on linux")
+	metricsAddress := c.Flags().StringP("metrics-addr", "m", "", "HTTP address to listen on with /metrics endpoint")
 	c.RunE = func(cmd *cobra.Command, args []string) error {
-		return run(*listenAddress, *flagPCAPIface)
+		return run(*listenAddress, *metricsAddress, *flagPCAPIface)
 	}
 
 	err := c.Execute()
@@ -36,8 +37,8 @@ func main() {
 	}
 }
 
-func run(address string, iface string) error {
-	listener.ProcessPackages(10, iface, address, func(ctx context.Context, unparsed *listener.Packet, packet *pb.Packet) error {
+func run(address string, metricsAddress string, iface string) error {
+	listener.ProcessPackages(10, iface, address, metricsAddress, func(ctx context.Context, unparsed *listener.Packet, packet *pb.Packet) error {
 		for _, event := range packet.Events {
 			var tags []string
 			for _, v := range event.Tags {

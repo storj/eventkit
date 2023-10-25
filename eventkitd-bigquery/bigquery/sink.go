@@ -11,19 +11,15 @@ import (
 // BigQuerySink provides an abstraction for processing events in a transport agnostic way.
 type BigQuerySink struct {
 	client *BigQueryClient
-
-	// callback to for statistics
-	sentCounter func(int)
 }
 
-func NewBigQuerySink(ctx context.Context, project string, dataset string, sentCounter func(int)) (*BigQuerySink, error) {
+func NewBigQuerySink(ctx context.Context, project string, dataset string) (*BigQuerySink, error) {
 	c, err := NewBigQueryClient(ctx, project, dataset)
 	if err != nil {
 		return nil, err
 	}
 	sink := &BigQuerySink{
-		sentCounter: sentCounter,
-		client:      c,
+		client: c,
 	}
 	return sink, nil
 }
@@ -56,6 +52,6 @@ func (b *BigQuerySink) Receive(ctx context.Context, unparsed *listener.Packet, p
 	}
 
 	err := b.client.SaveRecord(ctx, records)
-	b.sentCounter(len(records))
+	mon.Counter("sent_to_bq").Inc(int64(len(packet.Events)))
 	return err
 }

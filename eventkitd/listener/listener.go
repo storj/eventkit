@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"runtime"
@@ -14,13 +15,16 @@ import (
 	"github.com/google/gopacket/layers"
 	"github.com/jtolio/eventkit/pb"
 	"github.com/jtolio/eventkit/transport"
+	"github.com/spacemonkeygo/monkit/v3"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
 
+var mon = monkit.Package()
+
 type Handler func(ctx context.Context, unparsed *Packet, packet *pb.Packet) error
 
-func ProcessPackages(workers int, PCAPIface string, address string, handler Handler) {
+func ProcessPackages(workers int, PCAPIface string, address string, metricsAddress string, handler Handler) {
 	log, _ := zap.NewProduction()
 
 	ctx, done := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -40,6 +44,7 @@ func ProcessPackages(workers int, PCAPIface string, address string, handler Hand
 						fmt.Println(err)
 						continue
 					}
+					mon.IntVal("received_events").Observe(int64(len(packet.Events)))
 					err = handler(ctx, unparsed, packet)
 					if err != nil {
 						fmt.Println(err)
@@ -74,6 +79,18 @@ func ProcessPackages(workers int, PCAPIface string, address string, handler Hand
 		}
 	})
 
+	if metricsAddress != "" {
+		eg.Go(func() error {
+			pe := NewPrometheusEndpoint(monkit.Default)
+			var lc net.ListenConfig
+			ln, err := lc.Listen(ctx, "tcp", metricsAddress)
+			if err != nil {
+				return err
+			}
+			http.HandleFunc("/metrics", pe.PrometheusMetrics)
+			return http.Serve(ln, http.DefaultServeMux)
+		})
+	}
 	if PCAPIface != "" {
 		handle, supported, err := NewEthernetHandle(PCAPIface)
 		if err != nil {

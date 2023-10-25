@@ -83,7 +83,6 @@ type BigQuerySink struct {
 	dataset          *bigquery.Dataset
 	tables           map[string]bigquery.TableMetadata
 	schemeChangeLock sync.Locker
-	counter          bq.Counter
 }
 
 // Receive is called when the server receive an event to process.
@@ -136,7 +135,7 @@ func (b *BigQuerySink) Receive(ctx context.Context, unparsed *listener.Packet, p
 		if err != nil {
 			return err
 		}
-		b.counter.Increment(len(events))
+
 	}
 
 	return nil
@@ -299,11 +298,12 @@ tagloop:
 var _ bigquery.ValueSaver = &Record{}
 
 type Config struct {
-	Address       *string
-	PCAPInterface *string
-	Workers       *int
-	Verbose       *bool
-	Filter        *string
+	Address        *string
+	MetricsAddress *string
+	PCAPInterface  *string
+	Workers        *int
+	Verbose        *bool
+	Filter         *string
 
 	Google struct {
 		ProjectID *string
@@ -317,6 +317,7 @@ type Config struct {
 func main() {
 	cfg := Config{}
 	cfg.Address = flag.String("addr", ":9002", "udp address to listen on")
+	cfg.MetricsAddress = flag.String("metrics-addr", "", "HTTP address to listen on with /metrics endpoint")
 	cfg.PCAPInterface = flag.String("pcap-iface", "", "if set, use pcap for udp packets on this interface. must be on linux")
 	cfg.Workers = flag.Int("workers", runtime.NumCPU(), "number of workers")
 	cfg.Google.ProjectID = flag.String("google-project-id", os.Getenv("GOOGLE_PROJECT_ID"), "configure which google project is being used (env: GOOGLE_PROJECT_ID)")
@@ -329,14 +330,12 @@ func main() {
 	ctx, done := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer done()
 
-	cb := bq.NewCounter("%d messages are sent to BigQuery\n")
-	sink, err := bq.NewBigQuerySink(ctx, *cfg.Google.ProjectID, *cfg.Google.BigQuery.Dataset, cb.Increment)
+	sink, err := bq.NewBigQuerySink(ctx, *cfg.Google.ProjectID, *cfg.Google.BigQuery.Dataset)
 	if err != nil {
 		panic(err)
 	}
 
-	c := bq.NewCounter("%d events are received so far\n")
-	listener.ProcessPackages(*cfg.Workers, *cfg.PCAPInterface, *cfg.Address, func(ctx context.Context, unparsed *listener.Packet, packet *pb.Packet) error {
+	listener.ProcessPackages(*cfg.Workers, *cfg.PCAPInterface, *cfg.Address, *cfg.MetricsAddress, func(ctx context.Context, unparsed *listener.Packet, packet *pb.Packet) error {
 		if *cfg.Filter != "" && *cfg.Filter != packet.Application {
 			return nil
 		}
@@ -351,7 +350,6 @@ func main() {
 					event.TagsString())
 			}
 		}
-		c.Increment(len(packet.Events))
 		return sink.Receive(ctx, unparsed, *packet)
 	})
 }

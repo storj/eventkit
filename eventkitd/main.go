@@ -59,7 +59,7 @@ func main() {
 		}
 	}()
 
-	listener.ProcessPackages(*flagWorkers, *flagPCAPIface, *flagAddr, func(ctx context.Context, unparsed *listener.Packet, packet *pb.Packet) error {
+	listener.ProcessPackages(*flagWorkers, *flagPCAPIface, *flagAddr, "", func(ctx context.Context, unparsed *listener.Packet, packet *pb.Packet) error {
 		for _, event := range packet.Events {
 			record, eventPath := eventToRecord(packet, event, unparsed.Source, unparsed.ReceivedAt)
 			err := writer.Append(eventPath, record)
