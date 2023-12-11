@@ -38,6 +38,8 @@ type UDPClient struct {
 
 	initOnce    sync.Once
 	submitQueue chan *Event
+
+	writerPool *zlib.Writer
 }
 
 func NewUDPClient(application, version, instance, addr string) *UDPClient {
@@ -67,20 +69,30 @@ type outgoingPacket struct {
 	written, maxUncompressed int
 	events                   int
 	startTime                time.Time
+
+	client *UDPClient
 }
 
 func (c *UDPClient) newOutgoingPacket() *outgoingPacket {
 	op := &outgoingPacket{
 		startTime:       time.Now(),
 		maxUncompressed: c.MaxUncompressedBytes,
+		client:          c,
 	}
 	_, err := op.buf.Write([]byte("EK"))
 	if err != nil {
 		panic(err)
 	}
-	op.zl, err = zlib.NewWriterLevel(&op.buf, c.CompressionLevel)
-	if err != nil {
-		panic(err)
+
+	// grab a zlib writer from pool, when one exists.
+	op.zl, c.writerPool = c.writerPool, nil
+	if op.zl == nil {
+		op.zl, err = zlib.NewWriterLevel(&op.buf, c.CompressionLevel)
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		op.zl.Reset(&op.buf)
 	}
 
 	data, err := proto.Marshal(&pb.Packet{
@@ -120,6 +132,10 @@ func (op *outgoingPacket) finalize() []byte {
 	if err != nil {
 		panic(err)
 	}
+
+	// put zlib writer back to the pool.
+	op.client.writerPool, op.zl = op.zl, nil
+
 	return op.buf.Bytes()
 }
 
