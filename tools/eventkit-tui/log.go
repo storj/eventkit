@@ -35,7 +35,7 @@ func (l *RawLog) render() string {
 		e := l.repo.Events[i]
 		var tags []string
 		for _, t := range e.Event.Tags {
-			tags = append(tags, fmt.Sprintf("%s=%s", t.Key, t.GetString_()))
+			tags = append(tags, fmt.Sprintf("%s=%s", t.Key, t.ValueString()))
 		}
 		d := Colorized(fmt.Sprintf("%15s", e.ReceivedAt.Format("2006-01-02 15:04:05")), Green)
 		out += fmt.Sprintf("%s %s %s %s\n", d, strings.Join(e.Event.Scope, "."), Colorized(e.Event.Name, Yellow), strings.Join(tags, " "))

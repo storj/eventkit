@@ -7,8 +7,9 @@ import (
 	"io"
 	"net"
 
-	"github.com/gogo/protobuf/proto"
 	"github.com/jtolio/eventkit/pb"
+
+	"storj.io/picobuf"
 )
 
 // ListenUDP sets up a UDP server that receives packets containing events.
@@ -71,7 +72,7 @@ func ParsePacket(buf []byte) (*pb.Packet, error) {
 	}
 
 	var data pb.Packet
-	err = proto.Unmarshal(buf, &data)
+	err = picobuf.Unmarshal(buf, &data)
 	if err != nil {
 		return nil, err
 	}

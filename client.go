@@ -8,10 +8,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gogo/protobuf/proto"
 	"github.com/jtolio/eventkit/pb"
 	"github.com/jtolio/eventkit/utils"
 	"golang.org/x/sync/errgroup"
+
+	"storj.io/picobuf"
 )
 
 const (
@@ -97,7 +98,7 @@ func (c *UDPClient) newOutgoingPacket() *outgoingPacket {
 		op.zl.Reset(&op.buf)
 	}
 
-	data, err := proto.Marshal(&pb.Packet{
+	data, err := picobuf.Marshal(&pb.Packet{
 		Application:        c.Application,
 		ApplicationVersion: c.Version,
 		Instance:           c.Instance,
@@ -118,7 +119,7 @@ func (c *UDPClient) newOutgoingPacket() *outgoingPacket {
 }
 
 func (op *outgoingPacket) finalize() []byte {
-	data, err := proto.Marshal(&pb.Packet{
+	data, err := picobuf.Marshal(&pb.Packet{
 		SendOffsetNs: int64(time.Since(op.startTime)),
 	})
 	if err != nil {
@@ -149,7 +150,7 @@ func (op *outgoingPacket) addEvent(ev *Event) (full bool) {
 	v.TimestampOffsetNs = int64(ev.Timestamp.Sub(op.startTime))
 	v.Tags = ev.Tags
 
-	data, err := proto.Marshal(&pb.Packet{Events: []*pb.Event{&v}})
+	data, err := picobuf.Marshal(&pb.Packet{Events: []*pb.Event{&v}})
 	if err != nil {
 		panic(err)
 	}

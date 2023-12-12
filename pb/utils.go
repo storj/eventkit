@@ -15,7 +15,7 @@ func AsTimestamp(t time.Time) *Timestamp {
 }
 
 func (t *Timestamp) AsTime() time.Time {
-	return time.Unix(t.GetSeconds(), int64(t.GetNanos())).UTC()
+	return time.Unix(t.Seconds, int64(t.Nanos)).UTC()
 }
 
 func (tag *Tag) KVString() string {
