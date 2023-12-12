@@ -79,6 +79,8 @@ func (c *UDPClient) newOutgoingPacket() *outgoingPacket {
 		maxUncompressed: c.MaxUncompressedBytes,
 		client:          c,
 	}
+	op.buf.Grow(c.MaxUncompressedBytes)
+
 	_, err := op.buf.Write([]byte("EK"))
 	if err != nil {
 		panic(err)
