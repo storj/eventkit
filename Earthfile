@@ -9,18 +9,29 @@ lint:
     RUN --mount=type=cache,target=/root/.cache/go-build \
         --mount=type=cache,target=/go/pkg/mod \
         go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.54.1
+    RUN --mount=type=cache,target=/root/.cache/go-build \
+        --mount=type=cache,target=/go/pkg/mod \
+        go install github.com/storj/ci/check-cross-compile@latest
     COPY . .
+
     RUN golangci-lint run
     RUN staticcheck ./...
+    RUN check-cross-compile ./...
+
     WORKDIR /go/eventkit/tools
     RUN golangci-lint run
     RUN staticcheck ./...
+    RUN check-cross-compile ./...
+
     WORKDIR /go/eventkit/eventkitd
     RUN golangci-lint run
     RUN staticcheck ./...
+    RUN check-cross-compile ./...
+
     WORKDIR /go/eventkit/eventkitd-bigquery
     RUN golangci-lint run
     RUN staticcheck ./...
+    RUN check-cross-compile ./...
 
 test:
    COPY . .
