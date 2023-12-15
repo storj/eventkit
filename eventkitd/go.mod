@@ -7,6 +7,7 @@ require (
 	github.com/spacemonkeygo/monkit/v3 v3.0.22
 	go.uber.org/zap v1.26.0
 	golang.org/x/sync v0.4.0
+	storj.io/eventkit v0.0.0-20231215142613-2613093e7b0a
 	storj.io/picobuf v0.0.1
 )
 

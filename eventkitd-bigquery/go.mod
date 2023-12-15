@@ -7,6 +7,8 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spacemonkeygo/monkit/v3 v3.0.22
 	google.golang.org/api v0.107.0
+	storj.io/eventkit v0.0.0-20231215142613-2613093e7b0a
+	storj.io/eventkit/eventkitd v0.0.0-20231215142613-2613093e7b0a
 )
 
 require (
@@ -14,7 +16,6 @@ require (
 	cloud.google.com/go/compute v1.14.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v0.8.0 // indirect
-	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
@@ -35,4 +36,5 @@ require (
 	google.golang.org/genproto v0.0.0-20221227171554-f9683d7f8bef // indirect
 	google.golang.org/grpc v1.52.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
+	storj.io/picobuf v0.0.1 // indirect
 )
