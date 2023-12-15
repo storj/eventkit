@@ -1,4 +1,4 @@
-module github.com/jtolio/eventkit/tools
+module storj.io/eventkit/tools
 
 go 1.19
 
@@ -6,14 +6,11 @@ require (
 	github.com/charmbracelet/bubbletea v0.22.0
 	github.com/charmbracelet/lipgloss v0.5.0
 	github.com/elek/bubbles v0.0.0-20221003145532-35f25d076dd7
-	github.com/jtolio/eventkit v0.0.0-20220929203623-b60cde7876b9
-	github.com/jtolio/eventkit/eventkitd v0.0.0-20230608090656-a7bf79729b78
-	github.com/jtolio/eventkit/eventkitd-bigquery v0.0.0-20230705124759-cdaf7726a16f
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/viper v1.15.0
 	github.com/zeebo/errs/v2 v2.0.3
-	golang.org/x/sync v0.1.0
+	golang.org/x/sync v0.4.0
 )
 
 require (
@@ -47,15 +44,16 @@ require (
 	github.com/muesli/termenv v0.11.1-0.20220212125758-44cd13922739 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
+	github.com/spacemonkeygo/monkit/v3 v3.0.22 // indirect
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
+	github.com/zeebo/assert v1.3.1 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	go.uber.org/atomic v1.10.0 // indirect
-	go.uber.org/multierr v1.8.0 // indirect
-	go.uber.org/zap v1.23.0 // indirect
+	go.uber.org/multierr v1.10.0 // indirect
+	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/net v0.4.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783 // indirect
 	golang.org/x/sys v0.3.0 // indirect

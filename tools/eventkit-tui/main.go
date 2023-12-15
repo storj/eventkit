@@ -7,10 +7,11 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	ui "github.com/elek/bubbles"
-	"github.com/jtolio/eventkit/transport"
 	"github.com/spf13/cobra"
 	"github.com/zeebo/errs/v2"
 	"golang.org/x/sync/errgroup"
+
+	"storj.io/eventkit/transport"
 )
 
 func main() {

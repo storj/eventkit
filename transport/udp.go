@@ -7,8 +7,7 @@ import (
 	"io"
 	"net"
 
-	"github.com/jtolio/eventkit/pb"
-
+	"storj.io/eventkit/pb"
 	"storj.io/picobuf"
 )
 

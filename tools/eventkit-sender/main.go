@@ -5,9 +5,10 @@ import (
 	"log"
 	"strings"
 
-	"github.com/jtolio/eventkit"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
+
+	"storj.io/eventkit"
 )
 
 var ek = eventkit.Package()

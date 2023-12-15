@@ -8,9 +8,10 @@ import (
 	"time"
 
 	"cloud.google.com/go/bigquery"
-	"github.com/jtolio/eventkit/pb"
 	"github.com/pkg/errors"
 	"google.golang.org/api/googleapi"
+
+	"storj.io/eventkit/pb"
 )
 
 var nonSafeTableNameCharacters = regexp.MustCompile(`[^a-zA-Z0-9]+`)

@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/jtolio/eventkit/eventkitd/listener"
-	"github.com/jtolio/eventkit/pb"
+	"storj.io/eventkit/eventkitd/listener"
+	"storj.io/eventkit/pb"
 )
 
 // BigQuerySink provides an abstraction for processing events in a transport agnostic way.

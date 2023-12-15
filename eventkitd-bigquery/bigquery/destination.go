@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/jtolio/eventkit"
-	"github.com/jtolio/eventkit/pb"
+	"storj.io/eventkit"
+	"storj.io/eventkit/pb"
 )
 
 // BigQueryDestination can be used to save each evenkit package directly to server.

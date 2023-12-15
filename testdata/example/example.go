@@ -4,8 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/jtolio/eventkit"
 	"golang.org/x/sync/errgroup"
+
+	"storj.io/eventkit/eventkit"
 )
 
 var pkg = eventkit.Package()

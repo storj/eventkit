@@ -3,7 +3,7 @@ package eventkit
 import (
 	"time"
 
-	"github.com/jtolio/eventkit/pb"
+	"storj.io/eventkit/pb"
 )
 
 type Tag = *pb.Tag

@@ -7,9 +7,9 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/jtolio/eventkit/eventkitd/listener"
-	"github.com/jtolio/eventkit/eventkitd/private/path"
-	"github.com/jtolio/eventkit/pb"
+	"storj.io/eventkit/eventkitd/listener"
+	"storj.io/eventkit/eventkitd/private/path"
+	"storj.io/eventkit/pb"
 )
 
 var (

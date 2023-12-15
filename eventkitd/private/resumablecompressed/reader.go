@@ -5,7 +5,7 @@ import (
 	"errors"
 	"io"
 
-	"github.com/jtolio/eventkit/eventkitd/private/delimited"
+	"storj.io/eventkit/eventkitd/private/delimited"
 )
 
 type Reader struct {

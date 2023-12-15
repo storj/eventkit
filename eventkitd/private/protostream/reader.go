@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/gogo/protobuf/proto"
+	"storj.io/picobuf"
 )
 
 type Reader struct {
@@ -18,7 +18,7 @@ func NewReader(base io.Reader) *Reader {
 	}
 }
 
-func (r *Reader) Unmarshal(pb proto.Message) error {
+func (r *Reader) Unmarshal(pb picobuf.Message) error {
 	var header [4]byte
 	_, err := io.ReadFull(r.base, header[:])
 	if err != nil {
@@ -33,5 +33,5 @@ func (r *Reader) Unmarshal(pb proto.Message) error {
 	if err != nil {
 		return err
 	}
-	return proto.Unmarshal(buf, pb)
+	return picobuf.Unmarshal(buf, pb)
 }

@@ -13,11 +13,12 @@ import (
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
-	"github.com/jtolio/eventkit/pb"
-	"github.com/jtolio/eventkit/transport"
 	"github.com/spacemonkeygo/monkit/v3"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
+
+	"storj.io/eventkit/pb"
+	"storj.io/eventkit/transport"
 )
 
 var mon = monkit.Package()

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jtolio/eventkit/pb"
+	"storj.io/eventkit/pb"
 )
 
 type Packet struct {

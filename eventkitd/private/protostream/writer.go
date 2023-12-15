@@ -5,14 +5,13 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/gogo/protobuf/proto"
+	"storj.io/picobuf"
 )
 
 const maxSerializedSize = 4 * 1024 * 1024
 
 type Writer struct {
 	base io.Writer
-	buf  proto.Buffer
 }
 
 func NewWriter(base io.Writer) *Writer {
@@ -21,13 +20,11 @@ func NewWriter(base io.Writer) *Writer {
 	}
 }
 
-func (w *Writer) Marshal(pb proto.Message) error {
-	w.buf.Reset()
-	err := w.buf.Marshal(pb)
+func (w *Writer) Marshal(pb picobuf.Message) error {
+	data, err := picobuf.Marshal(pb)
 	if err != nil {
 		return err
 	}
-	data := w.buf.Bytes()
 	if len(data) > maxSerializedSize {
 		return fmt.Errorf("too large of message for stream")
 	}

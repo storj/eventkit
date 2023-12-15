@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jtolio/eventkit/pb"
+	"storj.io/eventkit/pb"
 )
 
 func BenchmarkOutgoingPacket(b *testing.B) {

@@ -13,10 +13,10 @@ import (
 	"sort"
 	"time"
 
-	"github.com/jtolio/eventkit/eventkitd/private/path"
-	"github.com/jtolio/eventkit/eventkitd/private/protostream"
-	"github.com/jtolio/eventkit/eventkitd/private/resumablecompressed"
-	"github.com/jtolio/eventkit/pb"
+	"storj.io/eventkit/eventkitd/private/path"
+	"storj.io/eventkit/eventkitd/private/protostream"
+	"storj.io/eventkit/eventkitd/private/resumablecompressed"
+	"storj.io/eventkit/pb"
 )
 
 type rowMap map[string]string

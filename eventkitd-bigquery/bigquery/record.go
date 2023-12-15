@@ -4,7 +4,8 @@ import (
 	"time"
 
 	"cloud.google.com/go/bigquery"
-	"github.com/jtolio/eventkit/pb"
+
+	"storj.io/eventkit/pb"
 )
 
 var _ bigquery.ValueSaver = &Record{}

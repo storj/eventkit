@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/gogo/protobuf/proto"
-	"github.com/jtolio/eventkit/eventkitd/private/protostream"
-	"github.com/jtolio/eventkit/eventkitd/private/resumablecompressed"
+	"storj.io/eventkit/eventkitd/private/protostream"
+	"storj.io/eventkit/eventkitd/private/resumablecompressed"
+	"storj.io/picobuf"
 )
 
 type handle struct {
@@ -48,7 +48,7 @@ func (w *Writer) Close() {
 	w.DropAll()
 }
 
-func (w *Writer) Append(path string, pb proto.Message) error {
+func (w *Writer) Append(path string, pb picobuf.Message) error {
 	w.mtx.Lock()
 	h, ok := w.handles[path]
 	if !ok {

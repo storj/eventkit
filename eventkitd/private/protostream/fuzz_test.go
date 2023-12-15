@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jtolio/eventkit/pb"
+	"storj.io/eventkit/pb"
 )
 
 func FuzzBasic(f *testing.F) {

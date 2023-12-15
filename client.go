@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jtolio/eventkit/pb"
-	"github.com/jtolio/eventkit/utils"
 	"golang.org/x/sync/errgroup"
 
+	"storj.io/eventkit/pb"
+	"storj.io/eventkit/utils"
 	"storj.io/picobuf"
 )
 

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/jtolio/eventkit/pb"
+	"storj.io/eventkit/pb"
 )
 
 func assert(t testing.TB, val bool) {

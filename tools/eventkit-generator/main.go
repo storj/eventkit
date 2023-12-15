@@ -7,9 +7,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/jtolio/eventkit"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
+
+	"storj.io/eventkit"
 )
 
 func main() {

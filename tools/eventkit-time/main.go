@@ -11,12 +11,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jtolio/eventkit"
-	"github.com/jtolio/eventkit/eventkitd-bigquery/bigquery"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/zeebo/errs/v2"
 	"golang.org/x/sync/errgroup"
+
+	"storj.io/eventkit"
+	"storj.io/eventkit/eventkitd-bigquery/bigquery"
 )
 
 func main() {

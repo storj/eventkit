@@ -1,7 +1,7 @@
 syntax = "proto3";
 package eventkit;
 
-option go_package = "github.com/jtolio/eventkit/pb";
+option go_package = "storj.io/eventkit/pb";
 
 message Timestamp {
     int64 seconds = 1;

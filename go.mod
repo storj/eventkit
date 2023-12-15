@@ -1,4 +1,4 @@
-module github.com/jtolio/eventkit
+module storj.io/eventkit
 
 go 1.18
 

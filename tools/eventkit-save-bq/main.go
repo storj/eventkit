@@ -5,10 +5,11 @@ import (
 	"log"
 	"strings"
 
-	"github.com/jtolio/eventkit"
-	"github.com/jtolio/eventkit/eventkitd-bigquery/bigquery"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+
+	"storj.io/eventkit"
+	"storj.io/eventkit/eventkitd-bigquery/bigquery"
 )
 
 var ek = eventkit.Package()

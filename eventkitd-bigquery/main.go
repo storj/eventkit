@@ -15,10 +15,11 @@ import (
 	"time"
 
 	"cloud.google.com/go/bigquery"
-	bq "github.com/jtolio/eventkit/eventkitd-bigquery/bigquery"
-	"github.com/jtolio/eventkit/eventkitd/listener"
-	"github.com/jtolio/eventkit/pb"
 	"google.golang.org/api/googleapi"
+
+	bq "storj.io/eventkit/eventkitd-bigquery/bigquery"
+	"storj.io/eventkit/eventkitd/listener"
+	"storj.io/eventkit/pb"
 )
 
 type Application struct {
