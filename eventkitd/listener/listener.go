@@ -57,7 +57,7 @@ func ProcessPackages(workers int, PCAPIface string, address string, metricsAddre
 	}
 	eg.Go(func() error {
 		sigusr := make(chan os.Signal, 1)
-		signal.Notify(sigusr, syscall.SIGUSR1)
+		signal.Notify(sigusr, signalPrintStack)
 		defer done()
 
 		for {
