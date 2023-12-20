@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"runtime/debug"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -110,19 +109,23 @@ func execute(dest string, name string, args []string, customTags []string, scope
 	if err != nil {
 		return err
 	}
-	usage := syscall.Rusage{}
-	err = syscall.Getrusage(syscall.RUSAGE_CHILDREN, &usage)
-	if err != nil {
-		return errs.Wrap(err)
-	}
+
 	t := time.Since(start)
 
 	var tags []eventkit.Tag
 	tags = append(tags, eventkit.String("cmd", args[0]))
 	tags = append(tags, eventkit.Int64("duration-ms", t.Milliseconds()))
-	tags = append(tags, eventkit.Int64("user-time-ms", usage.Utime.Nano()/1000000))
-	tags = append(tags, eventkit.Int64("system-time-ms", usage.Stime.Nano()/1000000))
-	tags = append(tags, eventkit.Int64("max-rss", usage.Maxrss))
+
+	usage, hasUsage, err := GetChildrenUsage()
+	if err != nil {
+		return errs.Wrap(err)
+	}
+	if hasUsage {
+		tags = append(tags, eventkit.Int64("user-time-ms", usage.UserTime.Milliseconds()))
+		tags = append(tags, eventkit.Int64("system-time-ms", usage.SystemTime.Milliseconds()))
+		tags = append(tags, eventkit.Int64("max-rss", usage.MaxRSS))
+	}
+
 	for _, c := range customTags {
 		parts := strings.SplitN(c, "=", 2)
 		tags = append(tags, eventkit.String(parts[0], parts[1]))
