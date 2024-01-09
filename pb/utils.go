@@ -25,7 +25,7 @@ func (tag *Tag) KVString() string {
 func (tag *Tag) ValueString() string {
 	switch t := tag.Value.(type) {
 	default:
-		panic("unknown tag type")
+		panic(fmt.Sprintf("%T", tag.Value))
 	case *Tag_String_:
 		return string(t.String_)
 	case *Tag_Int64:
