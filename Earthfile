@@ -1,11 +1,11 @@
 VERSION 0.6
-FROM golang:1.19
+FROM golang:1.21
 WORKDIR /go/eventkit
 
 lint:
     RUN --mount=type=cache,target=/root/.cache/go-build \
         --mount=type=cache,target=/go/pkg/mod \
-        go install honnef.co/go/tools/cmd/staticcheck@2022.1.3
+        go install honnef.co/go/tools/cmd/staticcheck@2023.1.6
     RUN --mount=type=cache,target=/root/.cache/go-build \
         --mount=type=cache,target=/go/pkg/mod \
         go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.54.1
@@ -65,8 +65,17 @@ format:
    RUN git apply --allow-empty build/format.patch
    RUN git status
 
+build:
+    WORKDIR /usr/src/eventkit
+    COPY . .
+    ENV CGO_ENABLED=false
+    WORKDIR /usr/src/eventkit/eventkitd-bigquery
+    RUN  --mount=type=cache,target=/root/.cache/go-build \
+         --mount=type=cache,target=/go/pkg/mod \
+         go install
+    SAVE ARTIFACT /go/bin/eventkitd-bigquery
+
 build-image:
-    FROM storjlabs/ci
     COPY .git .git
     ARG TAG=$(git rev-parse --short HEAD)
     ARG IMAGE=img.dev.storj.io/nightly/eventkitd
@@ -75,8 +84,5 @@ build-image:
 build-tagged-image:
     ARG --required TAG
     ARG --required IMAGE
-    FROM golang:1.18
-    WORKDIR /go/eventkit/eventkitd
-    COPY . /go/eventkit
-    RUN go install
+    COPY +build/eventkitd-bigquery /opt/eventkit/bin/eventkitd-bigquery
     SAVE IMAGE --push $IMAGE:$TAG $IMAGE:latest
