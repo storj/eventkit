@@ -78,7 +78,7 @@ build:
 build-image:
     COPY .git .git
     ARG TAG=$(git rev-parse --short HEAD)
-    ARG IMAGE=img.dev.storj.io/nightly/eventkitd
+    ARG IMAGE=img.dev.storj.io/dev/eventkitd
     BUILD +build-tagged-image --TAG=$TAG --IMAGE=$IMAGE
 
 build-tagged-image:
