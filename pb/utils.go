@@ -23,6 +23,9 @@ func (tag *Tag) KVString() string {
 }
 
 func (tag *Tag) ValueString() string {
+	if tag.Value == nil {
+		return ""
+	}
 	switch t := tag.Value.(type) {
 	default:
 		panic(fmt.Sprintf("%T", tag.Value))
