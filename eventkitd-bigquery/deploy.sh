@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
-CGO_ENABLED=0 go install
-scp $(which eventkitd-bigquery) eventkit:
-ssh eventkitd sudo mv eventkitd-bigquery /usr/local/bin/eventkitd-bigquery
+set -euxo pipefail
+CGO_ENABLED=0 go build -v -o eventkitd-bigquery .
+scp eventkitd-bigquery eventkitd.datasci.storj.io:
+ssh eventkitd.datasci.storj.io sudo mv eventkitd-bigquery /usr/local/bin/eventkitd-bigquery

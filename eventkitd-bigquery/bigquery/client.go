@@ -169,6 +169,8 @@ tagloop:
 			f.Type = bigquery.StringFieldType
 		case *pb.Tag_Timestamp:
 			f.Type = bigquery.TimestampFieldType
+		default:
+			continue tagloop
 		}
 		schema = append(schema, f)
 	}
