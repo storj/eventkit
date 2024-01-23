@@ -196,7 +196,7 @@ func (c *UDPClient) Run(ctx context.Context) {
 			c.droppedEvents.Add(-drops)
 			if p.addEvent(&Event{
 				Name:      "drops",
-				Scope:     []string{"storj.io", "eventkit"},
+				Scope:     []string{"storj.io/eventkit"},
 				Timestamp: time.Now(),
 				Tags:      []Tag{Int64("events", drops)},
 			}) {

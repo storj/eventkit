@@ -50,7 +50,7 @@ func run(address string, metricsAddress string, iface string) error {
 				packet.Application,
 				packet.Instance,
 				event.Scope,
-				lipgloss.NewStyle().Foreground(Green).Render(strings.Join(event.Scope, ".")),
+				lipgloss.NewStyle().Foreground(Green).Render(strings.Join(event.Scope, ".")+" "+event.Name),
 				strings.Join(tags, " "))
 		}
 		return nil
