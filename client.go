@@ -6,6 +6,7 @@ import (
 	"context"
 	"net"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"golang.org/x/sync/errgroup"
@@ -40,7 +41,8 @@ type UDPClient struct {
 	initOnce    sync.Once
 	submitQueue chan *Event
 
-	writerPool *zlib.Writer
+	writerPool    *zlib.Writer
+	droppedEvents atomic.Int64
 }
 
 func NewUDPClient(application, version, instance, addr string) *UDPClient {
@@ -190,6 +192,18 @@ func (c *UDPClient) Run(ctx context.Context) {
 	}
 
 	for {
+		if drops := c.droppedEvents.Load(); drops > 0 {
+			c.droppedEvents.Add(-drops)
+			if p.addEvent(&Event{
+				Name:      "drops",
+				Scope:     []string{"storj.io", "eventkit"},
+				Timestamp: time.Now(),
+				Tags:      []Tag{Int64("events", drops)},
+			}) {
+				sendAndReset()
+			}
+		}
+
 		select {
 		case em := <-c.submitQueue:
 			if p.addEvent(em) {
@@ -239,6 +253,8 @@ func (c *UDPClient) Submit(event *Event) {
 
 	select {
 	case c.submitQueue <- event:
+		return
 	default:
+		c.droppedEvents.Add(1)
 	}
 }
