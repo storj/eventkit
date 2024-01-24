@@ -49,6 +49,10 @@ func (u *UDPListener) Next() (payload []byte, source *net.UDPAddr, err error) {
 	return buf[:n], source, err
 }
 
+func (u *UDPListener) LocalAddr() net.Addr {
+	return u.conn.LocalAddr()
+}
+
 func (u *UDPListener) Close() error {
 	return u.conn.Close()
 }
