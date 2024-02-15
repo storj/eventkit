@@ -45,6 +45,8 @@ type UDPClient struct {
 	droppedEvents atomic.Int64
 }
 
+var _ Destination = &UDPClient{}
+
 func NewUDPClient(application, version, instance, addr string) *UDPClient {
 	c := &UDPClient{
 		Application: application,
@@ -248,13 +250,15 @@ func (c *UDPClient) send(packet *outgoingPacket, addr string) (err error) {
 	return err
 }
 
-func (c *UDPClient) Submit(event *Event) {
+func (c *UDPClient) Submit(events ...*Event) {
 	c.init()
 
-	select {
-	case c.submitQueue <- event:
-		return
-	default:
-		c.droppedEvents.Add(1)
+	for _, event := range events {
+		select {
+		case c.submitQueue <- event:
+			return
+		default:
+			c.droppedEvents.Add(1)
+		}
 	}
 }

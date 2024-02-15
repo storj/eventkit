@@ -36,31 +36,35 @@ func NewBigQueryDestination(ctx context.Context, appName string, project string,
 	return res, nil
 }
 
-func (b *BigQueryDestination) Submit(event *eventkit.Event) {
-	var tags []*pb.Tag
-	for _, t := range event.Tags {
-		tags = append(tags, &pb.Tag{
-			Key:   t.Key,
-			Value: t.Value,
+// Submit implements Destination.
+func (b *BigQueryDestination) Submit(events ...*eventkit.Event) {
+	records := map[string][]*Record{}
+	for _, event := range events {
+		var tags []*pb.Tag
+		for _, t := range event.Tags {
+			tags = append(tags, &pb.Tag{
+				Key:   t.Key,
+				Value: t.Value,
+			})
+		}
+		if _, found := records[event.Name]; !found {
+			records[event.Name] = make([]*Record, 0)
+		}
+		records[event.Name] = append(records[event.Name], &Record{
+			Application: Application{
+				Name:    b.appName,
+				Version: "0.0.1",
+			},
+			Source: Source{
+				Instance: b.SourceInstance,
+				Address:  "0.0.0.0",
+			},
+			ReceivedAt: time.Now(),
+			Timestamp:  event.Timestamp,
+			Tags:       tags,
 		})
 	}
-	records := map[string][]*Record{
-		event.Name: {
-			{
-				Application: Application{
-					Name:    b.appName,
-					Version: "0.0.1",
-				},
-				Source: Source{
-					Instance: b.SourceInstance,
-					Address:  "0.0.0.0",
-				},
-				ReceivedAt: time.Now(),
-				Timestamp:  event.Timestamp,
-				Tags:       tags,
-			},
-		},
-	}
+
 	err := b.client.SaveRecord(context.Background(), records)
 	if err != nil {
 		fmt.Println("WARN: Couldn't save eventkit record to BQ: ", err)

@@ -13,8 +13,12 @@ type Event struct {
 }
 
 type Destination interface {
-	Submit(*Event)
+	Submit(...*Event)
 	Run(ctx context.Context)
+}
+
+type BatchDestination interface {
+	SubmitBatch(*[]Event)
 }
 
 type Registry struct {
