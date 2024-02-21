@@ -3,7 +3,6 @@ package bigquery
 import (
 	"context"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"golang.org/x/sync/errgroup"
@@ -20,8 +19,9 @@ type BatchQueue struct {
 	target         eventkit.Destination
 	mu             sync.Mutex
 	events         []*eventkit.Event
-	droppedEvents  atomic.Int64
 }
+
+var _ eventkit.Destination = &BatchQueue{}
 
 // NewBatchQueue creates a new batchQueue. It sends out the received events in batch. Either after the flushInterval is
 // expired or when there are more than batchSize element in the queue.
@@ -60,10 +60,6 @@ func (c *BatchQueue) Run(ctx context.Context) {
 	}
 
 	for {
-		if drops := c.droppedEvents.Load(); drops > 0 {
-			mon.Counter("dropped_events").Inc(drops)
-			c.droppedEvents.Add(-drops)
-		}
 
 		select {
 		case em := <-c.submitQueue:
@@ -97,11 +93,13 @@ func (c *BatchQueue) addEvent(ev *eventkit.Event) (full bool) {
 }
 
 // Submit implements Destination.
-func (c *BatchQueue) Submit(event *eventkit.Event) {
-	select {
-	case c.submitQueue <- event:
-		return
-	default:
-		c.droppedEvents.Add(1)
+func (c *BatchQueue) Submit(events ...*eventkit.Event) {
+	defer mon.Task()(nil)(nil)
+	for _, e := range events {
+		select {
+		case c.submitQueue <- e:
+		default:
+			mon.Counter("dropped_events").Inc(1)
+		}
 	}
 }
