@@ -1,7 +1,11 @@
+// Copyright (C) 2024 Storj Labs, Inc.
+// See LICENSE for copying information.
+
 package bigquery
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -24,21 +28,31 @@ func TestBatchQueue(t *testing.T) {
 		})
 	}
 	require.Eventually(t, func() bool {
-		return len(m.events) == 2
+		return m.Len() == 2
 	}, 5*time.Second, 10*time.Millisecond)
 	require.Len(t, m.events[0], 10)
 	require.Len(t, m.events[1], 10)
 }
 
 type mockDestination struct {
+	mu     sync.Mutex
 	events [][]*eventkit.Event
 }
 
 func (m *mockDestination) Submit(event ...*eventkit.Event) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.events = append(m.events, event)
 }
 
+func (m *mockDestination) Len() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return len(m.events)
+}
+
 func (m *mockDestination) Run(ctx context.Context) {
+
 }
 
 var _ eventkit.Destination = &mockDestination{}
