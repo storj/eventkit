@@ -1,3 +1,6 @@
+// Copyright (C) 2024 Storj Labs, Inc.
+// See LICENSE for copying information.
+
 package bigquery
 
 import (
@@ -38,6 +41,8 @@ func NewBigQueryDestination(ctx context.Context, appName string, project string,
 
 // Submit implements Destination.
 func (b *BigQueryDestination) Submit(events ...*eventkit.Event) {
+	var err error
+	defer mon.Task()(nil)(&err)
 	records := map[string][]*Record{}
 	for _, event := range events {
 		var tags []*pb.Tag
@@ -65,7 +70,9 @@ func (b *BigQueryDestination) Submit(events ...*eventkit.Event) {
 		})
 	}
 
-	err := b.client.SaveRecord(context.Background(), records)
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancel()
+	err = b.client.SaveRecord(ctx, records)
 	if err != nil {
 		fmt.Println("WARN: Couldn't save eventkit record to BQ: ", err)
 	}
