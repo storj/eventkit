@@ -7,13 +7,12 @@ require (
 	github.com/spacemonkeygo/monkit/v3 v3.0.22
 	go.uber.org/zap v1.26.0
 	golang.org/x/sync v0.4.0
-	storj.io/eventkit v0.0.0-20231215142613-2613093e7b0a
-	storj.io/picobuf v0.0.1
+	storj.io/eventkit v0.0.0-20240222102130-43b472f3f489
+	storj.io/picobuf v0.0.3
 )
 
 require (
 	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/net v0.4.0 // indirect
 	golang.org/x/sys v0.3.0 // indirect
-	google.golang.org/protobuf v1.28.1 // indirect
 )
