@@ -52,10 +52,11 @@ func (b *BigQueryDestination) Submit(events ...*eventkit.Event) {
 				Value: t.Value,
 			})
 		}
-		if _, found := records[event.Name]; !found {
-			records[event.Name] = make([]*Record, 0)
+		tableName := TableName(event.Scope, event.Name)
+		if _, found := records[tableName]; !found {
+			records[tableName] = make([]*Record, 0)
 		}
-		records[event.Name] = append(records[event.Name], &Record{
+		records[tableName] = append(records[tableName], &Record{
 			Application: Application{
 				Name:    b.appName,
 				Version: "0.0.1",

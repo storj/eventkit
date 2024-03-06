@@ -34,7 +34,7 @@ func (b *BigQuerySink) Receive(ctx context.Context, unparsed *listener.Packet, p
 		eventTime := correctedStart.Add(time.Duration(event.TimestampOffsetNs) * time.Nanosecond)
 		correction := correctedStart.Sub(packet.StartTimestamp.AsTime())
 
-		k := bigquery.TableName(event)
+		k := bigquery.TableName(event.Scope, event.Name)
 
 		records[k] = append(records[k], &bigquery.Record{
 			Application: bigquery.Application{

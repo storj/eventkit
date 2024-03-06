@@ -184,15 +184,15 @@ tagloop:
 	return nil
 }
 
-func TableName(event *pb.Event) string {
+// TableName defines the naming convention between event and BQ table name.
+func TableName(scope []string, name string) string {
 	var res []string
-	for _, scope := range event.Scope {
+	for _, scope := range scope {
 		res = append(res, nonSafeTableNameCharacters.ReplaceAllString(scope, "_"))
 	}
-	res = append(res, nonSafeTableNameCharacters.ReplaceAllString(event.Name, "_"))
+	res = append(res, nonSafeTableNameCharacters.ReplaceAllString(name, "_"))
 
-	name := strings.Join(res, "_")
-	all := multiUnderscore.ReplaceAllString(name, "_")
+	all := multiUnderscore.ReplaceAllString(strings.Join(res, "_"), "_")
 	all = strings.Trim(all, "_")
 	return all
 }
