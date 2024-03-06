@@ -1,15 +1,18 @@
-package bigquery
+package destination
 
 import (
 	"context"
 	"sync"
 	"time"
 
+	"github.com/spacemonkeygo/monkit/v3"
 	"golang.org/x/sync/errgroup"
 
 	"storj.io/eventkit"
 	"storj.io/eventkit/utils"
 )
+
+var mon = monkit.Package()
 
 // BatchQueue collects events and send them in batches.
 type BatchQueue struct {

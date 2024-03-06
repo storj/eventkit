@@ -4,17 +4,18 @@ import (
 	"context"
 	"time"
 
+	"storj.io/eventkit/bigquery"
 	"storj.io/eventkit/eventkitd/listener"
 	"storj.io/eventkit/pb"
 )
 
 // BigQuerySink provides an abstraction for processing events in a transport agnostic way.
 type BigQuerySink struct {
-	client *BigQueryClient
+	client *bigquery.BigQueryClient
 }
 
 func NewBigQuerySink(ctx context.Context, project string, dataset string) (*BigQuerySink, error) {
-	c, err := NewBigQueryClient(ctx, project, dataset)
+	c, err := bigquery.NewBigQueryClient(ctx, project, dataset)
 	if err != nil {
 		return nil, err
 	}
@@ -26,21 +27,21 @@ func NewBigQuerySink(ctx context.Context, project string, dataset string) (*BigQ
 
 // Receive is called when the server receive an event to process.
 func (b *BigQuerySink) Receive(ctx context.Context, unparsed *listener.Packet, packet pb.Packet) error {
-	records := make(map[string][]*Record)
+	records := make(map[string][]*bigquery.Record)
 	correctedStart := unparsed.ReceivedAt.Add(time.Duration(-packet.SendOffsetNs) * time.Nanosecond)
 
 	for _, event := range packet.Events {
 		eventTime := correctedStart.Add(time.Duration(event.TimestampOffsetNs) * time.Nanosecond)
 		correction := correctedStart.Sub(packet.StartTimestamp.AsTime())
 
-		k := tableName(event)
+		k := bigquery.TableName(event)
 
-		records[k] = append(records[k], &Record{
-			Application: Application{
+		records[k] = append(records[k], &bigquery.Record{
+			Application: bigquery.Application{
 				Name:    packet.Application,
 				Version: packet.ApplicationVersion,
 			},
-			Source: Source{
+			Source: bigquery.Source{
 				Instance: packet.Instance,
 				Address:  unparsed.Source.IP.String(),
 			},

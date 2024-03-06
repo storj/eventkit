@@ -9,6 +9,7 @@ import (
 	"github.com/zeebo/errs/v2"
 
 	"storj.io/eventkit"
+	"storj.io/eventkit/destination"
 )
 
 // CreateDestination creates eventkit destination based on complex configuration.
@@ -74,7 +75,7 @@ func CreateDestination(ctx context.Context, config string) (eventkit.Destination
 
 			ll := lastLayer
 			lastLayer = func() (eventkit.Destination, error) {
-				return NewParallel(ll, workers), nil
+				return destination.NewParallel(ll, workers), nil
 			}
 
 		case "batch":
@@ -106,12 +107,12 @@ func CreateDestination(ctx context.Context, config string) (eventkit.Destination
 					return nil, errs.Errorf("Unknown parameter for batch destination %s. Please use queueSize/batchSize/flushInterval", key)
 				}
 			}
-			destination, err := lastLayer()
+			ekDest, err := lastLayer()
 			if err != nil {
 				return nil, err
 			}
 			lastLayer = func() (eventkit.Destination, error) {
-				return NewBatchQueue(destination, queueSize, batchSize, flushInterval), nil
+				return destination.NewBatchQueue(ekDest, queueSize, batchSize, flushInterval), nil
 			}
 		}
 	}

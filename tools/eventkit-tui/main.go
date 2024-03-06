@@ -75,7 +75,7 @@ func run(address string) error {
 	})
 
 	eg.Go(func() error {
-		err = app.Start()
+		_, err = app.Run()
 		_ = listener.Close()
 		cancel()
 		return err

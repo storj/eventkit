@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"storj.io/eventkit"
-	"storj.io/eventkit/eventkitd-bigquery/bigquery"
+	"storj.io/eventkit/bigquery"
 )
 
 var ek = eventkit.Package()
@@ -17,7 +17,7 @@ var ek = eventkit.Package()
 func main() {
 	c := cobra.Command{
 		Use:   "eventkit-save-bq TAG=VALUE [TAG=VALUE ....]",
-		Short: "Simple CLI to save evenkit records directly to BigQuery",
+		Short: "Simple CLI to save eventkit records directly to BigQuery",
 		Args:  cobra.MinimumNArgs(1),
 	}
 	name := c.Flags().StringP("name", "n", "test", "Name of the event sending out")

@@ -1,7 +1,7 @@
 // Copyright (C) 2024 Storj Labs, Inc.
 // See LICENSE for copying information.
 
-package bigquery
+package destination
 
 import (
 	"context"

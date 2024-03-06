@@ -184,7 +184,7 @@ tagloop:
 	return nil
 }
 
-func tableName(event *pb.Event) string {
+func TableName(event *pb.Event) string {
 	var res []string
 	for _, scope := range event.Scope {
 		res = append(res, nonSafeTableNameCharacters.ReplaceAllString(scope, "_"))

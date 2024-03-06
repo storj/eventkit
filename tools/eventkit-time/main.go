@@ -16,7 +16,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"storj.io/eventkit"
-	"storj.io/eventkit/eventkitd-bigquery/bigquery"
+	"storj.io/eventkit/bigquery"
 )
 
 func main() {
