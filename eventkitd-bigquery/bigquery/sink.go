@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"google.golang.org/api/option"
+
 	"storj.io/eventkit/bigquery"
 	"storj.io/eventkit/eventkitd/listener"
 	"storj.io/eventkit/pb"
@@ -14,8 +16,8 @@ type BigQuerySink struct {
 	client *bigquery.BigQueryClient
 }
 
-func NewBigQuerySink(ctx context.Context, project string, dataset string) (*BigQuerySink, error) {
-	c, err := bigquery.NewBigQueryClient(ctx, project, dataset)
+func NewBigQuerySink(ctx context.Context, project, dataset string, options ...option.ClientOption) (*BigQuerySink, error) {
+	c, err := bigquery.NewBigQueryClient(ctx, project, dataset, options...)
 	if err != nil {
 		return nil, err
 	}

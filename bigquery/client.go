@@ -10,6 +10,7 @@ import (
 	"cloud.google.com/go/bigquery"
 	"github.com/pkg/errors"
 	"google.golang.org/api/googleapi"
+	"google.golang.org/api/option"
 
 	"storj.io/eventkit/pb"
 )
@@ -23,8 +24,8 @@ type BigQueryClient struct {
 	schemeChangeLock sync.Locker
 }
 
-func NewBigQueryClient(ctx context.Context, project string, datasetName string) (*BigQueryClient, error) {
-	client, err := bigquery.NewClient(ctx, project)
+func NewBigQueryClient(ctx context.Context, project, datasetName string, options ...option.ClientOption) (*BigQueryClient, error) {
+	client, err := bigquery.NewClient(ctx, project, options...)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

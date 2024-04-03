@@ -7,6 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"google.golang.org/api/option"
 
 	"storj.io/eventkit"
 	"storj.io/eventkit/bigquery"
@@ -23,8 +24,9 @@ func main() {
 	name := c.Flags().StringP("name", "n", "test", "Name of the event sending out")
 	project := c.Flags().StringP("project", "p", "", "GCP project to use")
 	dataset := c.Flags().StringP("dataset", "d", "eventkitd", "GCP dataset to use")
+	credentialsPath := c.Flags().StringP("credentialsPath", "c", "", "GCP credentials path, defaults to GOOGLE_APPLICATION_CREDENTIALS if not provided")
 	c.RunE = func(cmd *cobra.Command, args []string) error {
-		return send(*project, *dataset, *name, args)
+		return send(*project, *dataset, *credentialsPath, *name, args)
 	}
 	err := c.Execute()
 	if err != nil {
@@ -32,8 +34,13 @@ func main() {
 	}
 }
 
-func send(project string, dataset string, name string, args []string) error {
-	d, err := bigquery.NewBigQueryDestination(context.Background(), "evenkit-save", project, dataset)
+func send(project, dataset, credentialsPath, name string, args []string) error {
+	var options []option.ClientOption
+	if credentialsPath != "" {
+		options = append(options, option.WithCredentialsFile(credentialsPath))
+	}
+
+	d, err := bigquery.NewBigQueryDestination(context.Background(), "evenkit-save", project, dataset, options...)
 	if err != nil {
 		return errors.WithStack(err)
 	}

@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/zeebo/errs/v2"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/api/option"
 
 	"storj.io/eventkit"
 	"storj.io/eventkit/bigquery"
@@ -29,6 +30,7 @@ func main() {
 	_ = c.Flags().StringSliceP("tag", "t", []string{}, "Custom tags to add to the events")
 	_ = c.Flags().StringP("instance", "i", "", "Instance name of the eventkitd monitoring (default: hostname)")
 	_ = c.Flags().StringP("scope", "s", "eventkit-time", "Scope to use for events")
+	_ = c.Flags().StringP("credentialsPath", "c", "", "GCP credentials path, defaults to GOOGLE_APPLICATION_CREDENTIALS if not provided")
 	version := c.Flags().BoolP("version", "v", false, "Scope to use for events")
 	viper.SetConfigName("eventkit-time")
 	viper.SetEnvPrefix("EVENTKIT")
@@ -57,7 +59,15 @@ func main() {
 			}
 		}
 
-		return execute(viper.GetString("destination"), viper.GetString("name"), args, viper.GetStringSlice("tag"), viper.GetString("scope"), viper.GetString("instance"))
+		return execute(
+			viper.GetString("destination"),
+			viper.GetString("name"),
+			viper.GetString("credentialsPath"),
+			args,
+			viper.GetStringSlice("tag"),
+			viper.GetString("scope"),
+			viper.GetString("instance"),
+		)
 	}
 	err = c.Execute()
 	if err != nil {
@@ -65,7 +75,7 @@ func main() {
 	}
 }
 
-func execute(dest string, name string, args []string, customTags []string, scope string, instance string) error {
+func execute(dest, name, credentialsPath string, args []string, customTags []string, scope, instance string) error {
 	ek := eventkit.DefaultRegistry.Scope(scope)
 	if instance == "" {
 		instance, _ = os.Hostname()
@@ -82,7 +92,11 @@ func execute(dest string, name string, args []string, customTags []string, scope
 		var err error
 		dest = strings.TrimPrefix(dest, "bq:")
 		parts := strings.Split(dest, "/")
-		client, err = bigquery.NewBigQueryDestination(destCtx, "eventkit-time", parts[0], parts[1])
+		var options []option.ClientOption
+		if credentialsPath != "" {
+			options = append(options, option.WithCredentialsFile(credentialsPath))
+		}
+		client, err = bigquery.NewBigQueryDestination(destCtx, "eventkit-time", parts[0], parts[1], options...)
 		if err != nil {
 			return err
 		}

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/zeebo/errs/v2"
+	"google.golang.org/api/option"
 
 	"storj.io/eventkit"
 	"storj.io/eventkit/destination"
@@ -19,6 +20,7 @@ import (
 //	bigquery:app=...,project=...,dataset=...
 //	bigquery:app=...,project=...,dataset=...|batch:queueSize=111,flashSize=111,flushInterval=111
 //	bigquery:app=...,project=...,dataset=...|parallel:runners=10|batch:queueSize=111,flashSize=111,flushInterval=111
+//	bigquery:app=...,project=...,dataset=...,credentialsPath=/path/to/my/service-account.json|parallel:runners=10|batch:queueSize=111
 func CreateDestination(ctx context.Context, config string) (eventkit.Destination, error) {
 	layers := strings.Split(config, "|")
 	var lastLayer func() (eventkit.Destination, error)
@@ -33,7 +35,7 @@ func CreateDestination(ctx context.Context, config string) (eventkit.Destination
 		}
 		switch typeName {
 		case "bigquery", "bq":
-			var appName, project, dataset string
+			var appName, project, dataset, credentialsPath string
 			for _, param := range strings.Split(params, ",") {
 				key, value, found := strings.Cut(param, "=")
 				if !found {
@@ -46,13 +48,19 @@ func CreateDestination(ctx context.Context, config string) (eventkit.Destination
 					project = value
 				case "dataset":
 					dataset = value
+				case "credentialsPath":
+					credentialsPath = value
 				default:
 					return nil, errs.Errorf("Unknown parameter for bigquery destination %s. Please use appName/project/dataset", key)
 				}
 
 			}
 			lastLayer = func() (eventkit.Destination, error) {
-				return NewBigQueryDestination(ctx, appName, project, dataset)
+				var options []option.ClientOption
+				if credentialsPath != "" {
+					options = append(options, option.WithCredentialsFile(credentialsPath))
+				}
+				return NewBigQueryDestination(ctx, appName, project, dataset, options...)
 			}
 		case "parallel":
 			var workers int

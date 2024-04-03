@@ -9,6 +9,8 @@ import (
 	"os"
 	"time"
 
+	"google.golang.org/api/option"
+
 	"storj.io/eventkit"
 	"storj.io/eventkit/pb"
 )
@@ -22,8 +24,8 @@ type BigQueryDestination struct {
 
 var _ eventkit.Destination = &BigQueryDestination{}
 
-func NewBigQueryDestination(ctx context.Context, appName string, project string, dataset string) (*BigQueryDestination, error) {
-	c, err := NewBigQueryClient(ctx, project, dataset)
+func NewBigQueryDestination(ctx context.Context, appName, project, dataset string, options ...option.ClientOption) (*BigQueryDestination, error) {
+	c, err := NewBigQueryClient(ctx, project, dataset, options...)
 	if err != nil {
 		return nil, err
 	}
