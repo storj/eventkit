@@ -82,7 +82,7 @@ func (r *Record) Save() (map[string]bigquery.Value, string, error) {
 // BigQuerySink provides an abstraction for processing events in a transport agnostic way.
 type BigQuerySink struct {
 	dataset          *bigquery.Dataset
-	tables           map[string]bigquery.TableMetadata
+	tables           map[string]*bigquery.TableMetadata
 	schemeChangeLock sync.Locker
 }
 
@@ -173,7 +173,7 @@ tagloop:
 	return false
 }
 
-func (b *BigQuerySink) createOrLoadTableScheme(ctx context.Context, table string) (bigquery.TableMetadata, error) {
+func (b *BigQuerySink) createOrLoadTableScheme(ctx context.Context, table string) (*bigquery.TableMetadata, error) {
 	b.schemeChangeLock.Lock()
 	defer b.schemeChangeLock.Unlock()
 	tableMetadata, found := b.tables[table]
@@ -231,23 +231,23 @@ func (b *BigQuerySink) createOrLoadTableScheme(ctx context.Context, table string
 				},
 			})
 			if err != nil {
-				return tableMetadata, err
+				return nil, err
 			}
 			meta, err = b.dataset.Table(table).Metadata(ctx)
 			if err != nil {
-				return tableMetadata, err
+				return nil, err
 			}
 
 		}
 	}
 	if err != nil {
-		return bigquery.TableMetadata{}, err
+		return nil, err
 	}
-	b.tables[table] = *meta
-	return *meta, err
+	b.tables[table] = meta
+	return meta, err
 }
 
-func (b *BigQuerySink) UpdateFields(ctx context.Context, metadata bigquery.TableMetadata, tags []*pb.Tag) error {
+func (b *BigQuerySink) UpdateFields(ctx context.Context, metadata *bigquery.TableMetadata, tags []*pb.Tag) error {
 	b.schemeChangeLock.Lock()
 	defer b.schemeChangeLock.Unlock()
 	schema := metadata.Schema
@@ -287,7 +287,7 @@ tagloop:
 	if err != nil {
 		return err
 	}
-	b.tables[metadata.Name] = *md
+	b.tables[metadata.Name] = md
 	return nil
 }
 

@@ -20,7 +20,7 @@ var multiUnderscore = regexp.MustCompile(`_{2,}`)
 
 type BigQueryClient struct {
 	dataset          *bigquery.Dataset
-	tables           map[string]bigquery.TableMetadata
+	tables           map[string]*bigquery.TableMetadata
 	schemeChangeLock sync.Locker
 }
 
@@ -32,12 +32,12 @@ func NewBigQueryClient(ctx context.Context, project, datasetName string, options
 
 	return &BigQueryClient{
 		schemeChangeLock: &sync.Mutex{},
-		tables:           make(map[string]bigquery.TableMetadata),
+		tables:           make(map[string]*bigquery.TableMetadata),
 		dataset:          client.Dataset(datasetName),
 	}, nil
 }
 
-func (b *BigQueryClient) createOrLoadTableScheme(ctx context.Context, table string) (bigquery.TableMetadata, error) {
+func (b *BigQueryClient) createOrLoadTableScheme(ctx context.Context, table string) (*bigquery.TableMetadata, error) {
 	b.schemeChangeLock.Lock()
 	defer b.schemeChangeLock.Unlock()
 
@@ -109,11 +109,11 @@ func (b *BigQueryClient) createOrLoadTableScheme(ctx context.Context, table stri
 	}
 
 	if err != nil {
-		return bigquery.TableMetadata{}, errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 
-	b.tables[table] = *meta
-	return *meta, err
+	b.tables[table] = meta
+	return meta, err
 }
 
 func (b *BigQueryClient) SaveRecord(ctx context.Context, records map[string][]*Record) error {
@@ -140,7 +140,7 @@ func (b *BigQueryClient) SaveRecord(ctx context.Context, records map[string][]*R
 	return nil
 }
 
-func (b *BigQueryClient) bigqueryUpdate(ctx context.Context, metadata bigquery.TableMetadata, tags []*pb.Tag) error {
+func (b *BigQueryClient) bigqueryUpdate(ctx context.Context, metadata *bigquery.TableMetadata, tags []*pb.Tag) error {
 	b.schemeChangeLock.Lock()
 	defer b.schemeChangeLock.Unlock()
 	schema := metadata.Schema
@@ -182,7 +182,7 @@ tagloop:
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	b.tables[metadata.Name] = *md
+	b.tables[metadata.Name] = md
 	return nil
 }
 
