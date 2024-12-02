@@ -40,12 +40,15 @@ func NewBigQueryClient(ctx context.Context, project, datasetName string, options
 func (b *BigQueryClient) createOrLoadTableScheme(ctx context.Context, table string) (bigquery.TableMetadata, error) {
 	b.schemeChangeLock.Lock()
 	defer b.schemeChangeLock.Unlock()
+
 	tableMetadata, found := b.tables[table]
 	if found {
 		return tableMetadata, nil
 	}
+
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
+
 	meta, err := b.dataset.Table(table).Metadata(ctx)
 	switch e := err.(type) {
 	case *googleapi.Error:
@@ -104,20 +107,18 @@ func (b *BigQueryClient) createOrLoadTableScheme(ctx context.Context, table stri
 
 		}
 	}
+
 	if err != nil {
 		return bigquery.TableMetadata{}, errors.WithStack(err)
 	}
+
 	b.tables[table] = *meta
 	return *meta, err
 }
 
 func (b *BigQueryClient) SaveRecord(ctx context.Context, records map[string][]*Record) error {
-	var err error
 	for table, events := range records {
-		tableMetadata, found := b.tables[table]
-		if !found {
-			tableMetadata, err = b.createOrLoadTableScheme(ctx, table)
-		}
+		tableMetadata, err := b.createOrLoadTableScheme(ctx, table)
 		if err != nil {
 			return err
 		}
@@ -131,7 +132,7 @@ func (b *BigQueryClient) SaveRecord(ctx context.Context, records map[string][]*R
 			}
 		}
 
-		err := b.dataset.Table(table).Inserter().Put(ctx, events)
+		err = b.dataset.Table(table).Inserter().Put(ctx, events)
 		if err != nil {
 			return err
 		}

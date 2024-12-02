@@ -113,12 +113,8 @@ func (b *BigQuerySink) Receive(ctx context.Context, unparsed *listener.Packet, p
 		})
 	}
 
-	var err error
 	for table, events := range records {
-		tableMetadata, found := b.tables[table]
-		if !found {
-			tableMetadata, err = b.createOrLoadTableScheme(ctx, table)
-		}
+		tableMetadata, err := b.createOrLoadTableScheme(ctx, table)
 		if err != nil {
 			return err
 		}
@@ -132,11 +128,10 @@ func (b *BigQuerySink) Receive(ctx context.Context, unparsed *listener.Packet, p
 			}
 		}
 
-		err := b.dataset.Table(table).Inserter().Put(ctx, events)
+		err = b.dataset.Table(table).Inserter().Put(ctx, events)
 		if err != nil {
 			return err
 		}
-
 	}
 
 	return nil
