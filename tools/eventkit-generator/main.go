@@ -14,7 +14,6 @@ import (
 )
 
 func main() {
-	rand.Seed(time.Now().Unix())
 	c := cobra.Command{
 		Use:   "eventkit-generator",
 		Short: "Simple CLI to generate test eventkit packages for test purposes.",
@@ -31,7 +30,6 @@ func main() {
 }
 
 func run(dest string, freq time.Duration) error {
-
 	var ek = eventkit.Package()
 	var ek1 = eventkit.Package().Subscope("sub1")
 	var ek2 = eventkit.Package().Subscope("sub2")
@@ -45,9 +43,11 @@ func run(dest string, freq time.Duration) error {
 		client.Run(ctx)
 		return nil
 	})
+
+	rng := rand.New(rand.NewSource(time.Now().Unix()))
 	for {
-		testID := strconv.Itoa(rand.Intn(3))
-		keyID := strconv.Itoa(rand.Intn(2))
+		testID := strconv.Itoa(rng.Intn(3))
+		keyID := strconv.Itoa(rng.Intn(2))
 		ek.Event("test"+testID, eventkit.String("v"+testID+"/k"+keyID, testID+"/"+keyID+"/value"+strconv.Itoa(rand.Intn(8))))
 		ek1.Event("test"+testID, eventkit.String("v"+testID+"/k"+keyID, testID+"/"+keyID+"/value"+strconv.Itoa(rand.Intn(8))))
 		ek2.Event("test"+testID, eventkit.String("v"+testID+"/k"+keyID, testID+"/"+keyID+"/value"+strconv.Itoa(rand.Intn(8))))

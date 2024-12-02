@@ -218,10 +218,9 @@ func (l *Values) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if l.scope == "" {
 			l.scope = l.repo.Events[0].ScopeStr()
 			l.name = l.repo.Events[0].Event.Name
-			if l.repo.Events[0].Event.Tags != nil && len(l.repo.Events[0].Event.Tags) > 0 {
+			if len(l.repo.Events[0].Event.Tags) > 0 {
 				l.tag = l.repo.Events[0].Event.Tags[0].Key
 			}
-
 		}
 	case ui.FocusedItemMsg[count]:
 		switch msg.Item.class {

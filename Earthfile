@@ -1,14 +1,14 @@
 VERSION 0.6
-FROM golang:1.21
+FROM golang:1.23
 WORKDIR /go/eventkit
 
 lint:
     RUN --mount=type=cache,target=/root/.cache/go-build \
         --mount=type=cache,target=/go/pkg/mod \
-        go install honnef.co/go/tools/cmd/staticcheck@2023.1.6
+        go install honnef.co/go/tools/cmd/staticcheck@2024.1.1
     RUN --mount=type=cache,target=/root/.cache/go-build \
         --mount=type=cache,target=/go/pkg/mod \
-        go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.54.1
+        go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.62.0
     RUN --mount=type=cache,target=/root/.cache/go-build \
         --mount=type=cache,target=/go/pkg/mod \
         go install github.com/storj/ci/check-cross-compile@latest
@@ -22,7 +22,7 @@ test:
    COPY . .
    RUN --mount=type=cache,target=/root/.cache/go-build \
        --mount=type=cache,target=/go/pkg/mod \
-       go test ./...
+       go test -race ./...
 
 check-format:
    COPY . .
