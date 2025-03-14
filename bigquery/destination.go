@@ -82,4 +82,13 @@ func (b *BigQueryDestination) Submit(events ...*eventkit.Event) {
 }
 
 func (b *BigQueryDestination) Run(ctx context.Context) {
+	// The BigQueryDestination doesn't need a separate goroutine
+}
+
+// Close cleans up resources
+func (b *BigQueryDestination) Close() error {
+	if b.client != nil {
+		return b.client.Close()
+	}
+	return nil
 }

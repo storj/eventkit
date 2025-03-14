@@ -15,6 +15,7 @@ type Event struct {
 type Destination interface {
 	Submit(...*Event)
 	Run(ctx context.Context)
+	Close() error
 }
 
 type BatchDestination interface {

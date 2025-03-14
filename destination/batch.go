@@ -106,3 +106,12 @@ func (c *BatchQueue) Submit(events ...*eventkit.Event) {
 		}
 	}
 }
+
+// Close implements Destination.
+func (c *BatchQueue) Close() error {
+	// Close the target destination
+	if closer, ok := c.target.(interface{ Close() error }); ok {
+		return closer.Close()
+	}
+	return nil
+}

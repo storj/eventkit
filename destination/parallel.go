@@ -67,4 +67,17 @@ func (p *Parallel) Run(ctx context.Context) {
 
 }
 
+// Close implements Destination.
+func (p *Parallel) Close() error {
+	// Signal to all workers to stop
+	select {
+	case <-p.teardown:
+		// Already closed
+	default:
+		close(p.teardown)
+	}
+	
+	return nil
+}
+
 var _ eventkit.Destination = &Parallel{}

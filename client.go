@@ -262,3 +262,9 @@ func (c *UDPClient) Submit(events ...*Event) {
 		}
 	}
 }
+
+// Close implements Destination.
+func (c *UDPClient) Close() error {
+	// Nothing to close for the UDP client
+	return nil
+}
