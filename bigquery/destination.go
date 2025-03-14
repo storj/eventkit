@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	"google.golang.org/api/option"
@@ -20,6 +21,9 @@ type BigQueryDestination struct {
 	client         *BigQueryClient
 	SourceInstance string
 	appName        string
+
+	closedMu sync.Mutex
+	closed   bool
 }
 
 var _ eventkit.Destination = &BigQueryDestination{}
@@ -43,6 +47,11 @@ func NewBigQueryDestination(ctx context.Context, appName, project, dataset strin
 
 // Submit implements Destination.
 func (b *BigQueryDestination) Submit(events ...*eventkit.Event) {
+	b.closedMu.Lock()
+	defer b.closedMu.Unlock()
+	if b.closed {
+		return
+	}
 	var err error
 	defer mon.Task()(nil)(&err)
 	records := map[string][]*Record{}
@@ -73,13 +82,16 @@ func (b *BigQueryDestination) Submit(events ...*eventkit.Event) {
 		})
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancel()
-	err = b.client.SaveRecord(ctx, records)
+	err = b.client.SaveRecord(records)
 	if err != nil {
-		fmt.Println("WARN: Couldn't save eventkit record to BQ: ", err)
+		fmt.Printf("WARN: Couldn't save eventkit record to BQ: %+v", err)
 	}
 }
 
 func (b *BigQueryDestination) Run(ctx context.Context) {
+	<-ctx.Done()
+	b.closedMu.Lock()
+	defer b.closedMu.Unlock()
+	b.closed = true
+	_ = b.client.close()
 }

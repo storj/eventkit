@@ -5,10 +5,12 @@ import (
 	"log"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 
 	"storj.io/eventkit"
+	"storj.io/eventkit/bigquery"
 )
 
 var ek = eventkit.Package()
@@ -31,13 +33,18 @@ func main() {
 }
 
 func send(dest string, name string, args []string) error {
-	client := eventkit.NewUDPClient("eventkit-sender", "0.0.1", "i1", dest)
-	eventkit.DefaultRegistry.AddDestination(client)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	destination, err := bigquery.CreateDestination(ctx, dest)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	eventkit.DefaultRegistry.AddDestination(destination)
+
 	w := errgroup.Group{}
 	w.Go(func() error {
-		client.Run(ctx)
+		destination.Run(ctx)
 		return nil
 	})
 	var tags []eventkit.Tag

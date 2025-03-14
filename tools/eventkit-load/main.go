@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/spacemonkeygo/monkit/v3"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
@@ -48,14 +49,18 @@ func run(dest string, testName string, workers int) error {
 
 	destination, err := bigquery.CreateDestination(ctx, dest)
 	if err != nil {
-		return err
+		return errors.WithStack(err)
 	}
-
 	eventkit.DefaultRegistry.AddDestination(destination)
+
+	w := errgroup.Group{}
+	w.Go(func() error {
+		destination.Run(ctx)
+		return nil
+	})
 
 	start := time.Now()
 
-	w := errgroup.Group{}
 	w.Go(func() error {
 		defer cancel()
 		<-interrupted
@@ -86,14 +91,11 @@ func run(dest string, testName string, workers int) error {
 				scope.Event("load", eventkit.Int64("counter", counter), eventkit.String("test", testName), eventkit.Int64("goroutine", ix))
 				counter++
 				if ctx.Err() != nil {
+					fmt.Println("Worker is done")
 					return nil
 				}
 			}
 		})
 	}
-	w.Go(func() error {
-		destination.Run(ctx)
-		return nil
-	})
 	return w.Wait()
 }

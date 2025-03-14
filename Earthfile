@@ -5,16 +5,16 @@ WORKDIR /go/eventkit
 lint:
     RUN --mount=type=cache,target=/root/.cache/go-build \
         --mount=type=cache,target=/go/pkg/mod \
-        go install honnef.co/go/tools/cmd/staticcheck@2024.1.1
+        go install honnef.co/go/tools/cmd/staticcheck@2025.1
     RUN --mount=type=cache,target=/root/.cache/go-build \
         --mount=type=cache,target=/go/pkg/mod \
-        go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.62.0
+        go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.7
     RUN --mount=type=cache,target=/root/.cache/go-build \
         --mount=type=cache,target=/go/pkg/mod \
         go install github.com/storj/ci/check-cross-compile@latest
     COPY . .
 
-    RUN golangci-lint run
+    RUN golangci-lint run --timeout=3m
     RUN staticcheck ./...
     RUN check-cross-compile ./...
 

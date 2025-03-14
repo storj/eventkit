@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/zeebo/errs/v2"
 	"golang.org/x/sync/errgroup"
-	"google.golang.org/api/option"
 
 	"storj.io/eventkit"
 	"storj.io/eventkit/bigquery"
@@ -28,9 +28,7 @@ func main() {
 	_ = c.Flags().StringP("name", "n", "test", "Name of the event sending out")
 	_ = c.Flags().StringP("destination", "d", "localhost:9000", "UDP host and port to send out package, or bq:project/dataset to directly send data to BQ")
 	_ = c.Flags().StringSliceP("tag", "t", []string{}, "Custom tags to add to the events")
-	_ = c.Flags().StringP("instance", "i", "", "Instance name of the eventkitd monitoring (default: hostname)")
 	_ = c.Flags().StringP("scope", "s", "eventkit-time", "Scope to use for events")
-	_ = c.Flags().StringP("credentialsPath", "c", "", "GCP credentials path, defaults to GOOGLE_APPLICATION_CREDENTIALS if not provided")
 	version := c.Flags().BoolP("version", "v", false, "Scope to use for events")
 	viper.SetConfigName("eventkit-time")
 	viper.SetEnvPrefix("EVENTKIT")
@@ -54,7 +52,8 @@ func main() {
 			return errs.Errorf("Command is missing")
 		}
 		if err := viper.ReadInConfig(); err != nil {
-			if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			var configFileNotFoundError viper.ConfigFileNotFoundError
+			if !errors.As(err, &configFileNotFoundError) {
 				return err
 			}
 		}
@@ -62,11 +61,9 @@ func main() {
 		return execute(
 			viper.GetString("destination"),
 			viper.GetString("name"),
-			viper.GetString("credentialsPath"),
 			args,
 			viper.GetStringSlice("tag"),
 			viper.GetString("scope"),
-			viper.GetString("instance"),
 		)
 	}
 	err = c.Execute()
@@ -75,42 +72,21 @@ func main() {
 	}
 }
 
-func execute(dest, name, credentialsPath string, args []string, customTags []string, scope, instance string) error {
+func execute(dest string, name string, args []string, customTags []string, scope string) error {
 	ek := eventkit.DefaultRegistry.Scope(scope)
-	if instance == "" {
-		instance, _ = os.Hostname()
-		if instance == "" {
-			instance = "unknown"
-		}
-	}
 
 	destCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var client eventkit.Destination
-	if strings.HasPrefix(dest, "bq:") {
-		var err error
-		dest = strings.TrimPrefix(dest, "bq:")
-		parts := strings.Split(dest, "/")
-		var options []option.ClientOption
-		if credentialsPath != "" {
-			options = append(options, option.WithCredentialsFile(credentialsPath))
-		}
-		client, err = bigquery.NewBigQueryDestination(destCtx, "eventkit-time", parts[0], parts[1], options...)
-		if err != nil {
-			return err
-		}
-	} else {
-		client = eventkit.NewUDPClient("eventkit-time", "0.0.1", instance, dest)
+	destination, err := bigquery.CreateDestination(destCtx, dest)
+	if err != nil {
+		return errors.WithStack(err)
 	}
+	eventkit.DefaultRegistry.AddDestination(destination)
 
-	eventkit.DefaultRegistry.AddDestination(client)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 	w := errgroup.Group{}
 	w.Go(func() error {
-		client.Run(ctx)
+		destination.Run(destCtx)
 		return nil
 	})
 
@@ -119,7 +95,7 @@ func execute(dest, name, credentialsPath string, args []string, customTags []str
 	cmd.Stderr = os.Stderr
 
 	start := time.Now()
-	err := cmd.Run()
+	err = cmd.Run()
 	if err != nil {
 		return err
 	}

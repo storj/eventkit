@@ -54,7 +54,7 @@ func (b *BigQuerySink) Receive(ctx context.Context, unparsed *listener.Packet, p
 		})
 	}
 
-	err := b.client.SaveRecord(ctx, records)
+	err := b.client.SaveRecord(records)
 	mon.Counter("sent_to_bq").Inc(int64(len(packet.Events)))
 	return err
 }
