@@ -37,7 +37,7 @@ type Source struct {
 func (r *Record) ToJSON() ([]byte, error) {
 	// Create a map for all fields
 	fields := make(map[string]interface{})
-	
+
 	// Add standard fields
 	fields["application_name"] = r.Application.Name
 	fields["application_version"] = r.Application.Version
@@ -46,11 +46,11 @@ func (r *Record) ToJSON() ([]byte, error) {
 	fields["received_at"] = r.ReceivedAt.Format(time.RFC3339Nano)
 	fields["timestamp"] = r.Timestamp.Format(time.RFC3339Nano)
 	fields["correction"] = r.Correction.Nanoseconds()
-	
+
 	// Add tag fields
 	for _, tag := range r.Tags {
 		field := tagFieldName(tag.Key)
-		
+
 		switch v := tag.Value.(type) {
 		case *pb.Tag_Bool:
 			fields[field] = v.Bool
@@ -68,7 +68,7 @@ func (r *Record) ToJSON() ([]byte, error) {
 			fields[field] = time.Unix(v.Timestamp.Seconds, int64(v.Timestamp.Nanos)).Format(time.RFC3339Nano)
 		}
 	}
-	
+
 	return json.Marshal(fields)
 }
 

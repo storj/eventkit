@@ -76,7 +76,7 @@ func (p *Parallel) Close() error {
 	default:
 		close(p.teardown)
 	}
-	
+
 	return nil
 }
 
