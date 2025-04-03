@@ -2,7 +2,6 @@ package bigquery
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
@@ -12,6 +11,7 @@ import (
 	"cloud.google.com/go/bigquery"
 	"cloud.google.com/go/bigquery/storage/managedwriter"
 	"github.com/pkg/errors"
+	"github.com/zeebo/errs/v2"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
 
@@ -36,7 +36,7 @@ func NewBigQueryClient(ctx context.Context, project, datasetName string, options
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	
+
 	// Create a managedwriter client
 	writerClient, err := managedwriter.NewClient(ctx, project, options...)
 	if err != nil {
@@ -70,7 +70,7 @@ func (b *BigQueryClient) getOrCreateManagedStream(ctx context.Context, table str
 
 	// Create the full table identifier
 	tableID := fmt.Sprintf("projects/%s/datasets/%s/tables/%s", b.projectID, b.datasetID, table)
-	
+
 	// Create a new ManagedStream for this table
 	stream, err := b.writerClient.NewManagedStream(ctx,
 		managedwriter.WithDestinationTable(tableID),
@@ -80,7 +80,7 @@ func (b *BigQueryClient) getOrCreateManagedStream(ctx context.Context, table str
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	
+
 	// Store the stream for future use
 	b.streams[table] = stream
 
@@ -168,51 +168,17 @@ func (b *BigQueryClient) createOrLoadTableScheme(ctx context.Context, table stri
 // convertRecordsToJSON converts records to JSON format for the Storage Write API
 func (b *BigQueryClient) convertRecordsToJSON(events []*Record) ([][]byte, error) {
 	jsonRows := make([][]byte, 0, len(events))
-	
+
 	for _, event := range events {
-		// Create a map for the record fields
-		recordMap := make(map[string]interface{})
-		
-		// Add standard fields
-		recordMap["application_name"] = event.Application.Name
-		recordMap["application_version"] = event.Application.Version
-		recordMap["source_instance"] = event.Source.Instance
-		recordMap["source_ip"] = event.Source.Address
-		recordMap["received_at"] = event.ReceivedAt.Format(time.RFC3339Nano)
-		recordMap["timestamp"] = event.Timestamp.Format(time.RFC3339Nano)
-		recordMap["correction"] = event.Correction.Nanoseconds()
-		
-		// Add tag fields
-		for _, tag := range event.Tags {
-			field := tagFieldName(tag.Key)
-			
-			switch v := tag.Value.(type) {
-			case *pb.Tag_Bool:
-				recordMap[field] = v.Bool
-			case *pb.Tag_Bytes:
-				recordMap[field] = v.Bytes
-			case *pb.Tag_Double:
-				recordMap[field] = v.Double
-			case *pb.Tag_DurationNs:
-				recordMap[field] = v.DurationNs
-			case *pb.Tag_Int64:
-				recordMap[field] = v.Int64
-			case *pb.Tag_String_:
-				recordMap[field] = string(v.String_)
-			case *pb.Tag_Timestamp:
-				recordMap[field] = time.Unix(v.Timestamp.Seconds, int64(v.Timestamp.Nanos)).Format(time.RFC3339Nano)
-			}
-		}
-		
 		// Convert to JSON bytes
-		jsonData, err := json.Marshal(recordMap)
+		jsonData, err := event.ToJSON()
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
-		
+
 		jsonRows = append(jsonRows, jsonData)
 	}
-	
+
 	return jsonRows, nil
 }
 
@@ -235,7 +201,7 @@ func (b *BigQueryClient) SaveRecord(ctx context.Context, records map[string][]*R
 
 		// Try to use the managedwriter API first
 		useManagedWriter := true
-		
+
 		// Process records in batches to avoid overwhelming the API
 		const batchSize = 500
 		for i := 0; i < len(events); i += batchSize {
@@ -243,9 +209,9 @@ func (b *BigQueryClient) SaveRecord(ctx context.Context, records map[string][]*R
 			if end > len(events) {
 				end = len(events)
 			}
-			
+
 			batch := events[i:end]
-			
+
 			if useManagedWriter {
 				// Try to use the managedwriter API
 				err := b.saveBatchWithManagedWriter(ctx, table, batch)
@@ -259,7 +225,7 @@ func (b *BigQueryClient) SaveRecord(ctx context.Context, records map[string][]*R
 					continue
 				}
 			}
-			
+
 			// Fallback to standard BigQuery API
 			err = b.dataset().Table(table).Inserter().Put(ctx, batch)
 			if err != nil {
@@ -277,25 +243,25 @@ func (b *BigQueryClient) saveBatchWithManagedWriter(ctx context.Context, table s
 	if err != nil {
 		return err
 	}
-	
+
 	// Convert records to JSON format
 	jsonRows, err := b.convertRecordsToJSON(batch)
 	if err != nil {
 		return err
 	}
-	
+
 	// Append rows to the stream
 	result, err := stream.AppendRows(ctx, jsonRows)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	
+
 	// Wait for the result to complete
 	_, err = result.GetResult(ctx)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	
+
 	return nil
 }
 
@@ -342,7 +308,7 @@ tagloop:
 		return errors.WithStack(err)
 	}
 	b.tables[metadata.Name] = md
-	
+
 	// When we update the schema, we need to delete the stream cache entry
 	// so that it will be recreated with the new schema on the next SaveRecord call
 	if stream, ok := b.streams[metadata.Name]; ok {
@@ -350,7 +316,7 @@ tagloop:
 		_ = stream.Close()
 		delete(b.streams, metadata.Name)
 	}
-	
+
 	return nil
 }
 
@@ -369,32 +335,27 @@ func TableName(scope []string, name string) string {
 
 // Close closes all clients and connections
 func (b *BigQueryClient) Close() error {
-	var errs []error
-	
+	var errsGroup errs.Group
+
 	// Close all managed streams
 	for table, stream := range b.streams {
 		if err := stream.Close(); err != nil {
-			errs = append(errs, errors.WithStack(err))
+			errsGroup.Add(errors.WithStack(err))
 		}
 		delete(b.streams, table)
 	}
-	
+
 	// Close the writer client
 	if err := b.writerClient.Close(); err != nil {
-		errs = append(errs, errors.WithStack(err))
+		errsGroup.Add(errors.WithStack(err))
 	}
-	
+
 	// Close the BigQuery client
 	if err := b.client.Close(); err != nil {
-		errs = append(errs, errors.WithStack(err))
+		errsGroup.Add(errors.WithStack(err))
 	}
-	
-	// Return the first error if any
-	if len(errs) > 0 {
-		return errs[0]
-	}
-	
-	return nil
+
+	return errsGroup.Err()
 }
 
 func tagFieldName(key string) string {
