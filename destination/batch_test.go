@@ -55,4 +55,8 @@ func (m *mockDestination) Run(ctx context.Context) {
 
 }
 
+func (m *mockDestination) Close() error {
+	return nil
+}
+
 var _ eventkit.Destination = &mockDestination{}
