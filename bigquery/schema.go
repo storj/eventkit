@@ -224,7 +224,10 @@ func (s *Schema) RecordToPB(record *Record) ([]byte, error) {
 			case *pb.Tag_String_:
 				msg.Set(field, protoreflect.ValueOfString(string(v.String_)))
 			case *pb.Tag_Timestamp:
-				msg.Set(field, protoreflect.ValueOfInt64(int64(v.Timestamp.Nanos/1000)))
+				if v.Timestamp != nil {
+					msg.Set(field, protoreflect.ValueOfInt64(v.Timestamp.Seconds*1_000_000+int64(v.Timestamp.Nanos/1000)))
+				}
+
 			}
 		}
 	}
