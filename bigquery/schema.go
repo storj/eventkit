@@ -102,6 +102,12 @@ tagloop:
 		return true, errors.WithStack(err)
 	}
 
+	// TODO: Unfortunately, the ds.Table().Update is eventual consistent. It's not guaranteed to be finished.
+	// Usually the next stream write fails with:
+	// code = InvalidArgument desc = Input schema has more fields than BigQuery schema, extra fields: 'tag_foo2'
+	// I don't have good solution for now. But because this should happen very rarely (usually during deploy time, when new tag was introduced),
+	// we can just wait a bit. It's inconvenient for tools like eventkit-time, but this is what it is.
+	time.Sleep(10 * time.Second)
 	s.tableMetadata = md
 
 	s.messageDescriptor, err = toMessageDescriptor(s.tableMetadata)
