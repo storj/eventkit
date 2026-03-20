@@ -37,6 +37,7 @@ func (p *Parallel) Submit(events ...*eventkit.Event) {
 	select {
 	case p.queue <- events:
 	case <-p.teardown:
+		mon.Counter("dropped_events").Inc(int64(len(events)))
 	}
 
 }
