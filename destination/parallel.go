@@ -29,6 +29,10 @@ func NewParallel(target func() (eventkit.Destination, error), workers int) *Para
 }
 
 // Submit implements eventkit.Destination.
+//
+// The events are sent only while `Run` is executing.
+//
+// It panics if it's called after `Run` finished.
 func (p *Parallel) Submit(events ...*eventkit.Event) {
 	select {
 	case p.queue <- events:
@@ -38,6 +42,8 @@ func (p *Parallel) Submit(events ...*eventkit.Event) {
 }
 
 // Run implements eventkit.Destination.
+//
+// Once it's called and exited, it must not be called again.
 func (p *Parallel) Run(ctx context.Context) {
 	w := errgroup.Group{}
 	for i := 0; i < p.workers; i++ {
