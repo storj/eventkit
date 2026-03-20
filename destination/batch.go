@@ -40,10 +40,15 @@ func NewBatchQueue(target eventkit.Destination, queueSize int, batchSize int, fl
 }
 
 // Run implements Destination.
+//
+// Once it's called and exited, it must not be called again.
 func (c *BatchQueue) Run(ctx context.Context) {
 	ticker := utils.NewJitteredTicker(c.flushInterval)
 	var background errgroup.Group
-	defer func() { _ = background.Wait() }()
+	defer func() {
+		_ = background.Wait()
+		close(c.submitQueue)
+	}()
 	background.Go(func() error {
 		c.target.Run(ctx)
 		return nil
@@ -63,7 +68,6 @@ func (c *BatchQueue) Run(ctx context.Context) {
 	}
 
 	for {
-
 		select {
 		case em := <-c.submitQueue:
 			if c.addEvent(em) {
@@ -96,6 +100,10 @@ func (c *BatchQueue) addEvent(ev *eventkit.Event) (full bool) {
 }
 
 // Submit implements Destination.
+//
+// The events are sent only while `Run` is executing.
+//
+// It panics if it's called after `Run` finished.
 func (c *BatchQueue) Submit(events ...*eventkit.Event) {
 	defer mon.Task()(nil)(nil)
 	for _, e := range events {
