@@ -84,6 +84,8 @@ func (b *BigQueryDestination) Submit(events ...*eventkit.Event) {
 
 	err = b.client.SaveRecord(records)
 	if err != nil {
+		mon.Counter("dropped_events").Inc(int64(len(events)))
+		mon.Counter("submit_events_error").Inc(int64(len(events)))
 		fmt.Printf("WARN: Couldn't save eventkit record to BQ: %+v", err)
 	}
 }
