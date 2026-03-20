@@ -56,7 +56,7 @@ func (c *BatchQueue) Run(ctx context.Context) {
 	sendAndReset := func() {
 		c.mu.Lock()
 		eventsToSend := c.events
-		c.events = make([]*eventkit.Event, 0)
+		c.events = make([]*eventkit.Event, 0, c.batchThreshold)
 		c.mu.Unlock()
 
 		c.target.Submit(eventsToSend...)
