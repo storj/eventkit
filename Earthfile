@@ -1,5 +1,5 @@
 VERSION 0.6
-FROM golang:1.23
+FROM golang:1.26
 WORKDIR /go/eventkit
 
 lint:
