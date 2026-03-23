@@ -24,7 +24,7 @@ func BenchmarkOutgoingPacket(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		packet := client.newOutgoingPacket()
-		for k := 0; k < 70; k++ {
+		for range 70 {
 			event.Timestamp = event.Timestamp.Add(100 * time.Millisecond)
 			full := packet.addEvent(&Event{})
 			if full {

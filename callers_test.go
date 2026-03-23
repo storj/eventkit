@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func assertEqual(t *testing.T, a, b interface{}) {
+func assertEqual(t *testing.T, a, b any) {
 	t.Helper()
 	if a != b {
 		t.Fatalf("%q != %q", a, b)
