@@ -36,7 +36,7 @@ func main() {
 				if err != nil {
 					return nil
 				}
-				defer fh.Close()
+				defer func() { _ = fh.Close() }()
 				r := protostream.NewReader(resumablecompressed.NewReader(fh))
 				for {
 					var record pb.Record

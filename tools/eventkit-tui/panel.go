@@ -55,7 +55,7 @@ func (l *MainPane) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				ReceivedAt: msg.ReceivedAt,
 			}
 			l.repo.Add(&event)
-			m, c := l.Tabs.UpdateAll(ui.RefreshMsg{})
+			m, c := l.UpdateAll(ui.RefreshMsg{})
 			l.Tabs = m.(*ui.Tabs)
 			cmd = tea.Batch(c, cmd)
 		}

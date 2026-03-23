@@ -22,7 +22,7 @@ type Writer struct {
 	handles map[string]*handle
 }
 
-func NewWriter() *Writer { // nolint:deadcode
+func NewWriter() *Writer {
 	return &Writer{
 		handles: map[string]*handle{},
 	}
@@ -66,7 +66,7 @@ func (w *Writer) Append(path string, pb picobuf.Message) error {
 		rcw, err := resumablecompressed.NewWriter(fh, zlib.DefaultCompression)
 		if err != nil {
 			w.mtx.Unlock()
-			fh.Close()
+			_ = fh.Close()
 			return err
 		}
 

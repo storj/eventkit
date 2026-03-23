@@ -8,7 +8,7 @@ lint:
         go install honnef.co/go/tools/cmd/staticcheck@2025.1
     RUN --mount=type=cache,target=/root/.cache/go-build \
         --mount=type=cache,target=/go/pkg/mod \
-        go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.7
+        go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.3
     RUN --mount=type=cache,target=/root/.cache/go-build \
         --mount=type=cache,target=/go/pkg/mod \
         go install github.com/storj/ci/check-cross-compile@latest

@@ -20,7 +20,7 @@ func NewWriter(base io.WriteCloser, level int) (*Writer, error) {
 	}
 	compress, err := zlib.NewWriterLevel(w, level)
 	if err != nil {
-		w.Flush()
+		_ = w.Flush()
 		return nil, err
 	}
 	return &Writer{

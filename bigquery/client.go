@@ -131,7 +131,7 @@ func (b *BigQueryClient) SaveRecord(records map[string][]*Record) error {
 			// If the schema changed, we need to recreate the stream
 			b.streamMu.Lock()
 			if stream, ok := b.streams[table]; ok {
-				stream.Close()
+				_ = stream.Close()
 				delete(b.streams, table)
 			}
 			b.streamMu.Unlock()

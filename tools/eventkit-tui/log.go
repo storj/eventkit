@@ -24,11 +24,11 @@ func NewRawLog(repo *Repo) *RawLog {
 func (l *RawLog) render() string {
 	out := ""
 
-	for l.start+l.Text.GetHeight() <= len(l.repo.Events) && l.Text.GetHeight() > 5 {
-		l.start = l.start + l.Text.GetHeight() - 5
+	for l.start+l.GetHeight() <= len(l.repo.Events) && l.GetHeight() > 5 {
+		l.start = l.start + l.GetHeight() - 5
 	}
 
-	for i := l.start; i < l.start+l.Text.GetHeight(); i++ {
+	for i := l.start; i < l.start+l.GetHeight(); i++ {
 		if len(l.repo.Events)-1 < i {
 			break
 		}

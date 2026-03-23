@@ -1,11 +1,11 @@
 package eventkit
 
 import (
-	"context"
 	"reflect"
 	"testing"
 	"time"
 
+	"storj.io/common/testcontext"
 	"storj.io/eventkit/pb"
 	"storj.io/eventkit/transport"
 )
@@ -36,12 +36,11 @@ func BenchmarkOutgoingPacket(b *testing.B) {
 }
 
 func TestZeroValueType(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := testcontext.New(t)
 
 	l, err := transport.ListenUDP("127.0.0.1:0")
 	requireNoError(t, err)
-	defer l.Close()
+	defer ctx.Check(l.Close)
 
 	go func() {
 		client := NewUDPClient("application", "v1.0.0", "instance", l.LocalAddr().String())

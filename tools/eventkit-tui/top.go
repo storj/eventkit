@@ -72,8 +72,8 @@ func (l *Scopes) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg.(type) {
 	case ui.RefreshMsg:
 		var oldValue count
-		if !l.List.Empty() {
-			oldValue = l.List.Selected()
+		if !l.Empty() {
+			oldValue = l.Selected()
 		}
 
 		var newValues = countsFromMap("scope", l.repo.GetScopes())
@@ -122,8 +122,8 @@ func (l *Names) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		var oldValue count
-		if !l.List.Empty() {
-			oldValue = l.List.Selected()
+		if !l.Empty() {
+			oldValue = l.Selected()
 		}
 
 		var newValues = countsFromMap("name", l.repo.GetNames(l.scope))
@@ -135,7 +135,7 @@ func (l *Names) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.Item.class {
 		case "scope":
 			l.scope = msg.Item.name
-			l.List.Reset()
+			l.Reset()
 		}
 	}
 	m, c := l.List.Update(msg)
@@ -170,8 +170,8 @@ func (l *Tags) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		var oldValue count
-		if !l.List.Empty() {
-			oldValue = l.List.Selected()
+		if !l.Empty() {
+			oldValue = l.Selected()
 		}
 
 		var newValues = countsFromMap("tag", l.repo.GetTags(l.scope, l.name))
@@ -182,10 +182,10 @@ func (l *Tags) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.Item.class {
 		case "scope":
 			l.scope = msg.Item.name
-			l.List.Reset()
+			l.Reset()
 		case "name":
 			l.name = msg.Item.name
-			l.List.Reset()
+			l.Reset()
 		}
 	}
 	m, c := l.List.Update(msg)
