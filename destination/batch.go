@@ -79,7 +79,7 @@ func (c *BatchQueue) Run(ctx context.Context) {
 			}
 		case <-ctx.Done():
 			left := len(c.submitQueue)
-			for i := 0; i < left; i++ {
+			for range left {
 				if c.addEvent(<-c.submitQueue) {
 					sendAndReset()
 				}

@@ -122,8 +122,8 @@ func execute(dest string, name string, args []string, customTags []string, scope
 	}
 	for _, e := range os.Environ() {
 		parts := strings.SplitN(e, "=", 2)
-		if strings.HasPrefix(parts[0], "EVENTKIT_TAG_") {
-			tagName := strings.TrimPrefix(parts[0], "EVENTKIT_TAG_")
+		if after, ok := strings.CutPrefix(parts[0], "EVENTKIT_TAG_"); ok {
+			tagName := after
 			tagName = strings.ToLower(tagName)
 			tags = append(tags, eventkit.String(tagName, parts[1]))
 		}

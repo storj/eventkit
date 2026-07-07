@@ -71,7 +71,7 @@ func assertEqual(t testing.TB, a, b []string) {
 	if len(a) != len(b) {
 		t.Fatalf("lengths of %d and %d unequal", len(a), len(b))
 	}
-	for i := 0; i < len(a); i++ {
+	for i := range a {
 		if a[i] != b[i] {
 			t.Fatalf("index %d of %q and %q unequal", i, a[i], b[i])
 		}

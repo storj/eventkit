@@ -81,7 +81,7 @@ func run(dest string, testName string, workers int) error {
 		fmt.Println("sent/s", int((sent-dropped)/durationSec))
 		return nil
 	})
-	for i := 0; i < workers; i++ {
+	for i := range workers {
 		ix := int64(i)
 		w.Go(func() error {
 			scope := eventkit.Package().Subscope(fmt.Sprintf("sub%d", ix))

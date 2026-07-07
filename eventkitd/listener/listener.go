@@ -33,7 +33,7 @@ func ProcessPackages(workers int, PCAPIface string, address string, metricsAddre
 
 	queue := make(chan *Packet, workers)
 	eg, ctx := errgroup.WithContext(ctx)
-	for i := 0; i < workers; i++ {
+	for range workers {
 		eg.Go(func() error {
 			for {
 				select {

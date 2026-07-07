@@ -36,7 +36,7 @@ type Source struct {
 // ToJSON converts the Record to a JSON representation that BigQuery can ingest
 func (r *Record) ToJSON() ([]byte, error) {
 	// Create a map for all fields
-	fields := make(map[string]interface{})
+	fields := make(map[string]any)
 
 	// Add standard fields
 	fields["application_name"] = r.Application.Name

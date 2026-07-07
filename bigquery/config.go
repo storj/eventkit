@@ -36,7 +36,7 @@ func CreateDestination(ctx context.Context, config string) (eventkit.Destination
 		switch typeName {
 		case "bigquery", "bq":
 			var appName, project, dataset, credentialsPath string
-			for _, param := range strings.Split(params, ",") {
+			for param := range strings.SplitSeq(params, ",") {
 				key, value, found := strings.Cut(param, "=")
 				if !found {
 					return nil, errs.Errorf("eventkit destination parameters should be defined in param2=value2 format")
@@ -64,7 +64,7 @@ func CreateDestination(ctx context.Context, config string) (eventkit.Destination
 			}
 		case "parallel":
 			var workers int
-			for _, param := range strings.Split(params, ",") {
+			for param := range strings.SplitSeq(params, ",") {
 				key, value, found := strings.Cut(param, "=")
 				if !found {
 					return nil, errs.Errorf("eventkit destination parameters should be defined in param2=value2 format")
@@ -90,7 +90,7 @@ func CreateDestination(ctx context.Context, config string) (eventkit.Destination
 			var queueSize, batchSize int
 			var flushInterval time.Duration
 			var err error
-			for _, param := range strings.Split(params, ",") {
+			for param := range strings.SplitSeq(params, ",") {
 				key, value, found := strings.Cut(param, "=")
 				if !found {
 					return nil, errs.Errorf("eventkit destination parameters should be defined in param2=value2 format")

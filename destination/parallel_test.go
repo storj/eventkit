@@ -1,7 +1,6 @@
 package destination
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -12,15 +11,14 @@ import (
 
 func TestParallel(t *testing.T) {
 	m := &mockDestination{}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	queue := NewParallel(func() (eventkit.Destination, error) {
 		return m, nil
 	}, 10)
 	go func() {
 		queue.Run(ctx)
 	}()
-	for i := 0; i < 10000; i++ {
+	for range 10000 {
 		queue.Submit(&eventkit.Event{
 			Name: "foobar",
 		})

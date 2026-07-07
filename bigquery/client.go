@@ -142,10 +142,7 @@ func (b *BigQueryClient) SaveRecord(records map[string][]*Record) error {
 		// Process records in batches to avoid overwhelming the API
 		const batchSize = 500
 		for i := 0; i < len(events); i += batchSize {
-			end := i + batchSize
-			if end > len(events) {
-				end = len(events)
-			}
+			end := min(i+batchSize, len(events))
 
 			batch := events[i:end]
 

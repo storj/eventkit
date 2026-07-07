@@ -239,13 +239,13 @@ func (l *Values) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (l *Values) render() string {
-	out := ""
+	var out strings.Builder
 	counts := countsFromMap("value", l.repo.GetCounts(l.scope, l.name, l.tag))
 	counts.doSort()
 
 	for _, c := range counts {
-		out += fmt.Sprintf("%s %s\n", Colorized(fmt.Sprintf("%5d", c.count), Red), c.name)
+		fmt.Fprintf(&out, "%s %s\n", Colorized(fmt.Sprintf("%5d", c.count), Red), c.name)
 	}
 
-	return out
+	return out.String()
 }

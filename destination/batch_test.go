@@ -16,13 +16,12 @@ import (
 
 func TestBatchQueue(t *testing.T) {
 	m := &mockDestination{}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	queue := NewBatchQueue(m, 1000, 10, 1*time.Hour)
 	go func() {
 		queue.Run(ctx)
 	}()
-	for i := 0; i < 25; i++ {
+	for range 25 {
 		queue.Submit(&eventkit.Event{
 			Name: "foobar",
 		})

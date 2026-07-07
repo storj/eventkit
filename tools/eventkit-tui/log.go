@@ -22,7 +22,7 @@ func NewRawLog(repo *Repo) *RawLog {
 }
 
 func (l *RawLog) render() string {
-	out := ""
+	var out strings.Builder
 
 	for l.start+l.GetHeight() <= len(l.repo.Events) && l.GetHeight() > 5 {
 		l.start = l.start + l.GetHeight() - 5
@@ -38,7 +38,7 @@ func (l *RawLog) render() string {
 			tags = append(tags, fmt.Sprintf("%s=%s", t.Key, t.ValueString()))
 		}
 		d := Colorized(fmt.Sprintf("%15s", e.ReceivedAt.Format("2006-01-02 15:04:05")), Green)
-		out += fmt.Sprintf("%s %s %s %s\n", d, strings.Join(e.Event.Scope, "."), Colorized(e.Event.Name, Yellow), strings.Join(tags, " "))
+		fmt.Fprintf(&out, "%s %s %s %s\n", d, strings.Join(e.Event.Scope, "."), Colorized(e.Event.Name, Yellow), strings.Join(tags, " "))
 	}
-	return out
+	return out.String()
 }
