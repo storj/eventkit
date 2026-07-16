@@ -37,25 +37,3 @@ format:
    COPY +check-format/format.patch build/format.patch
    RUN git apply --allow-empty build/format.patch
    RUN git status
-
-build:
-    WORKDIR /usr/src/eventkit
-    COPY . .
-    ENV CGO_ENABLED=false
-    WORKDIR /usr/src/eventkit/eventkitd-bigquery
-    RUN  --mount=type=cache,target=/root/.cache/go-build \
-         --mount=type=cache,target=/go/pkg/mod \
-         go install
-    SAVE ARTIFACT /go/bin/eventkitd-bigquery
-
-build-image:
-    COPY .git .git
-    ARG TAG=$(git rev-parse --short HEAD)
-    ARG IMAGE=img.dev.storj.io/dev/eventkitd
-    BUILD +build-tagged-image --TAG=$TAG --IMAGE=$IMAGE
-
-build-tagged-image:
-    ARG --required TAG
-    ARG --required IMAGE
-    COPY +build/eventkitd-bigquery /opt/eventkit/bin/eventkitd-bigquery
-    SAVE IMAGE --push $IMAGE:$TAG $IMAGE:latest

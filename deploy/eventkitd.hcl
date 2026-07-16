@@ -14,10 +14,7 @@ job "eventkitd" {
       
       driver = "docker"
       config {
-        image = "img.dev.storj.io/nightly/eventkitd:latest"
-        args  = [
-          "/go/bin/eventkitd"
-        ]
+        image = "ghcr.io/storj/eventkit/eventkitd:20260716-7122e9e"
         network_mode = "host"
       }
     }
